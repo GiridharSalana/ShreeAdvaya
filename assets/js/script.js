@@ -294,7 +294,7 @@ function createWhatsAppFloat() {
 
 // Initialize WhatsApp float button
 document.addEventListener('DOMContentLoaded', () => {
-    createWhatsAppFloat();
+    // createWhatsAppFloat(); // Commented out to hide floating WhatsApp button
     
     // Initialize scroll animations
     initScrollAnimations();
