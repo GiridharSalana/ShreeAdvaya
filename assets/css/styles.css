@@ -229,6 +229,9 @@ h6 {
     background-position: center;
     background-repeat: no-repeat;
     animation: slideshow 24s infinite;
+    will-change: opacity;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 .hero-slide:nth-child(1) {

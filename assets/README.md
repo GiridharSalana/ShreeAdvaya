@@ -43,11 +43,11 @@ assets/
 - **logo.svg** (3.0 KB) - Main logo with mandala pattern and "SA" monogram
 - **favicon.svg** (1.7 KB) - Favicon/shortcut icon for browser tabs
 
-#### Hero Slideshow (1920px HD WebP)
-- **hero-1.webp** (124 KB) - Traditional Red Silk Saree
-- **hero-2.webp** (848 KB) - Blue Handwoven Cotton Saree
-- **hero-3.webp** (124 KB) - Traditional Red Silk Saree variation
-- **hero-4.webp** (848 KB) - Blue Handwoven Cotton Saree variation
+#### Hero Slideshow (1920x1080 HD WebP - Optimized)
+- **hero-1.webp** (53 KB) - Traditional Red Silk Saree
+- **hero-2.webp** (251 KB) - Blue Handwoven Cotton Saree
+- **hero-3.webp** (53 KB) - Traditional Red Silk Saree variation
+- **hero-4.webp** (251 KB) - Blue Handwoven Cotton Saree variation
 
 #### Product Cards (600px WebP)
 - **product-1.webp** (16 KB) - Traditional Silk Saree
@@ -66,8 +66,9 @@ assets/
 - **gallery-6.webp** (37 KB) - Printed Cotton Saree Collection
 
 ## Total Size
-**~2.7 MB** (all assets combined - 16 WebP images + 2 SVG logos)
-**13% smaller** than original JPG format for faster loading!
+**~1.5 MB** (all assets combined - 16 WebP images + 2 SVG logos)
+**52% smaller** than original JPG format!
+**Hero images optimized**: 1.9MB → 608KB (68% reduction)
 
 ## Path References
 
@@ -85,11 +86,12 @@ background-image: url('../images/hero-1.webp');
 ```
 
 ## Image Format & Optimization
-All images are in **WebP format** for superior compression and performance:
-- 🚀 **13% smaller** than JPG format
-- ⚡ **Faster loading** times
-- 📱 **Better mobile** performance
-- ✨ **Same visual quality** at 80% compression
+All images are in **WebP format** with aggressive optimization:
+- 🚀 **52% smaller** than original JPG format
+- ⚡ **Hero images**: Resized to 1920x1080 and 70% quality (68% reduction!)
+- 📱 **Product/Gallery**: 80% quality for best balance
+- ✨ **Preloading**: First hero image preloads for instant display
+- 💨 **No buffering**: Optimized file sizes load instantly
 - 🔒 **Offline accessibility** - all images stored locally
 - 📦 **No external dependencies**
 
