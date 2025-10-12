@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShreeAdvaya - Premium Saree Collection</title>
+    <meta name="description"
+        content="Discover exquisite sarees at ShreeAdvaya. Premium collection of traditional and contemporary sarees with modern elegance.">
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>ShreeAdvaya</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#products" class="nav-link">Products</a></li>
+                <li><a href="#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-slideshow">
+            <div class="hero-slide active"></div>
+            <div class="hero-slide"></div>
+            <div class="hero-slide"></div>
+            <div class="hero-slide"></div>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Elegance Redefined</h1>
+                <p class="hero-subtitle">Discover our exquisite collection of premium sarees that blend traditional
+                    craftsmanship with modern sophistication</p>
+                <div class="hero-buttons">
+                    <a href="#products" class="btn btn-primary">Explore Collection</a>
+                    <a href="#contact" class="btn btn-secondary">Get in Touch</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">About ShreeAdvaya</h2>
+            <p class="section-subtitle">Celebrating the timeless elegance of Indian sarees with modern sophistication
+            </p>
+
+            <div class="about-content">
+                <p class="about-description">
+                    ShreeAdvaya represents the perfect fusion of traditional Indian craftsmanship and contemporary
+                    design. We curate the finest collection of sarees, each piece telling a story of heritage, elegance,
+                    and timeless beauty. Our commitment to quality and authenticity ensures that every saree in our
+                    collection is a masterpiece, carefully selected to celebrate the rich cultural heritage of India
+                    while meeting modern fashion sensibilities.
+                </p>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-gem"></i>
+                    <h3>Premium Quality</h3>
+                    <p>Handpicked finest materials and craftsmanship</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-palette"></i>
+                    <h3>Unique Designs</h3>
+                    <p>Exclusive patterns and traditional motifs</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-shipping-fast"></i>
+                    <h3>Fast Delivery</h3>
+                    <p>Secure and timely delivery across India</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-certificate"></i>
+                    <h3>Authentic Collection</h3>
+                    <p>100% genuine and certified sarees</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="products" class="products">
+        <div class="container">
+            <h2 class="section-title">Our Collection</h2>
+            <p class="section-subtitle">Explore our carefully curated range of premium sarees</p>
+
+            <div class="product-categories">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="silk">Silk Sarees</button>
+                <button class="category-btn" data-category="cotton">Cotton Sarees</button>
+                <button class="category-btn" data-category="designer">Designer Sarees</button>
+                <button class="category-btn" data-category="bridal">Bridal Sarees</button>
+            </div>
+
+            <div class="products-grid">
+                <div class="product-card" data-category="silk">
+                    <div class="product-image">
+                        <img src="https://images.pexels.com/photos/3621950/pexels-photo-3621950.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Traditional Red Silk Saree">
+                        <div class="product-overlay">
+                            <button class="btn btn-primary"
+                                onclick="openWhatsApp('Silk Saree - Traditional Red')">Inquire Now</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Traditional Silk Saree</h3>
+                        <p class="product-price">₹8,999</p>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="cotton">
+                    <div class="product-image">
+                        <img src="https://images.pexels.com/photos/8553530/pexels-photo-8553530.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Handwoven Cotton Saree">
+                        <div class="product-overlay">
+                            <button class="btn btn-primary"
+                                onclick="openWhatsApp('Cotton Saree - Handwoven Blue')">Inquire Now</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Handwoven Cotton Saree</h3>
+                        <p class="product-price">₹3,999</p>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="designer">
+                    <div class="product-image">
+                        <img src="https://images.pexels.com/photos/14759552/pexels-photo-14759552.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Designer Embroidered Saree">
+                        <div class="product-overlay">
+                            <button class="btn btn-primary"
+                                onclick="openWhatsApp('Designer Saree - Embroidered Gold')">Inquire Now</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Embroidered Designer Saree</h3>
+                        <p class="product-price">₹12,999</p>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="bridal">
+                    <div class="product-image">
+                        <img src="https://images.pexels.com/photos/12211605/pexels-photo-12211605.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Bridal Red Gold Saree">
+                        <div class="product-overlay">
+                            <button class="btn btn-primary" onclick="openWhatsApp('Bridal Saree - Red & Gold')">Inquire
+                                Now</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Bridal Red & Gold Saree</h3>
+                        <p class="product-price">₹25,999</p>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="silk">
+                    <div class="product-image">
+                        <img src="https://images.pexels.com/photos/12142528/pexels-photo-12142528.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Royal Purple Silk Saree">
+                        <div class="product-overlay">
+                            <button class="btn btn-primary" onclick="openWhatsApp('Silk Saree - Royal Purple')">Inquire
+                                Now</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Royal Purple Silk Saree</h3>
+                        <p class="product-price">₹9,999</p>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="cotton">
+                    <div class="product-image">
+                        <img src="https://images.pexels.com/photos/11261106/pexels-photo-11261106.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Printed Green Cotton Saree">
+                        <div class="product-overlay">
+                            <button class="btn btn-primary"
+                                onclick="openWhatsApp('Cotton Saree - Printed Green')">Inquire Now</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Printed Cotton Saree</h3>
+                        <p class="product-price">₹2,999</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery">
+        <div class="container">
+            <h2 class="section-title">Gallery</h2>
+            <p class="section-subtitle">A glimpse into our beautiful collection</p>
+
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="https://images.pexels.com/photos/3621950/pexels-photo-3621950.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        alt="Elegant Red Silk Saree Collection">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.pexels.com/photos/8553530/pexels-photo-8553530.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        alt="Traditional Blue Saree Collection">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.pexels.com/photos/14759552/pexels-photo-14759552.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        alt="Designer Saree Collection">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.pexels.com/photos/12211605/pexels-photo-12211605.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        alt="Bridal Saree Collection">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.pexels.com/photos/12142528/pexels-photo-12142528.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        alt="Purple Silk Saree Collection">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.pexels.com/photos/11261106/pexels-photo-11261106.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        alt="Printed Cotton Saree Collection">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Get in Touch</h2>
+            <p class="section-subtitle">Ready to find your perfect saree? Contact us for personalized assistance and
+                exclusive collections.</p>
+
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3 class="contact-section-title">Contact Information</h3>
+                    <p class="contact-description">
+                        We're here to help you find the perfect saree. Reach out through any of these channels for quick
+                        assistance.
+                    </p>
+
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <i class="fab fa-whatsapp"></i>
+                            <div>
+                                <h3>WhatsApp Business</h3>
+                                <p>+91 98765 43210</p>
+                                <a href="https://wa.me/919876543210" class="whatsapp-link" target="_blank">Chat Now</a>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h3>Email</h3>
+                                <p>info@shreeadvaya.com</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <h3>Location</h3>
+                                <p>Mumbai, Maharashtra, India</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-form">
+                    <h3 class="contact-section-title">Quick Inquiry</h3>
+                    <p class="form-description">Fill out the form below and we'll get back to you shortly.</p>
+                    <form>
+                        <div class="form-group">
+                            <input type="text" placeholder="Your Name *" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" placeholder="Your Email *" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" placeholder="Your Phone *" required>
+                        </div>
+                        <div class="form-group">
+                            <select required>
+                                <option value="">Select Saree Type *</option>
+                                <option value="silk">Silk Sarees</option>
+                                <option value="cotton">Cotton Sarees</option>
+                                <option value="designer">Designer Sarees</option>
+                                <option value="bridal">Bridal Sarees</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea placeholder="Your Message (Optional)" rows="4"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary"
+                            onclick="openWhatsApp('New inquiry from website form')">Send via WhatsApp</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <h3>ShreeAdvaya</h3>
+                    <p>Celebrating the timeless elegance of Indian sarees with modern sophistication.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#products">Our Collection</a></li>
+                        <li><a href="#gallery">Gallery</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Categories</h4>
+                    <ul>
+                        <li><a href="#products">Silk Sarees</a></li>
+                        <li><a href="#products">Cotton Sarees</a></li>
+                        <li><a href="#products">Designer Sarees</a></li>
+                        <li><a href="#products">Bridal Sarees</a></li>
+                        <li><a href="#products">Party Wear</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li><a href="#contact">Support</a></li>
+                        <li><a href="#contact">Shipping Info</a></li>
+                        <li><a href="#contact">Return Policy</a></li>
+                        <li><a href="#contact">Size Guide</a></li>
+                        <li><a href="#contact">FAQs</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Contact Us</h4>
+                    <ul class="contact-list">
+                        <li><i class="fas fa-phone"></i> +91 98765 43210</li>
+                        <li><i class="fas fa-envelope"></i> info@shreeadvaya.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Mumbai, Maharashtra</li>
+                        <li><i class="fas fa-clock"></i> Mon - Sat: 10AM - 8PM</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="designed-text">Designed with <i class="fas fa-heart"></i> for elegance</p>
+                <p class="copyright-text">&copy; 2024 ShreeAdvaya. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
