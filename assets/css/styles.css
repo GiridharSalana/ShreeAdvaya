@@ -969,6 +969,18 @@ h6 {
     font-size: 0.9rem;
 }
 
+.designer-link {
+    color: #d4af37;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.designer-link:hover {
+    color: #ffd700;
+    text-decoration: underline;
+}
+
 @keyframes heartbeat {
 
     0%,
