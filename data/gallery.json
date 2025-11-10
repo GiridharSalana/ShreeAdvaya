@@ -16,11 +16,5 @@
     "image": "assets/images/new-3.webp",
     "alt": "Traditional Wedding Saree",
     "createdAt": "2024-01-01T00:00:00.000Z"
-  },
-  {
-    "id": "4",
-    "image": "assets/images/new-4.webp",
-    "alt": "Luxury Silk Saree",
-    "createdAt": "2024-01-01T00:00:00.000Z"
   }
 ]
