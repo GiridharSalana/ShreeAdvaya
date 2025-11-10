@@ -2,6 +2,22 @@
 const API_BASE = '/api';
 const STORAGE_KEY = 'admin_token';
 
+// Batch Save System - Track all changes locally
+const pendingChanges = {
+    products: { create: [], update: [], delete: [] },
+    gallery: { create: [], update: [], delete: [] },
+    hero: { create: [], update: [], delete: [] },
+    content: { update: null }
+};
+
+// Original data cache
+const originalData = {
+    products: [],
+    gallery: [],
+    hero: [],
+    content: {}
+};
+
 // Check authentication on load
 document.addEventListener('DOMContentLoaded', async () => {
     const isAuthenticated = await checkAuth();
@@ -199,15 +215,19 @@ async function loadData() {
 async function loadProducts() {
     try {
         const products = await apiCall('/products');
+        originalData.products = JSON.parse(JSON.stringify(products)); // Deep copy
+        
+        // Merge with pending changes
+        const displayProducts = getDisplayProducts();
         const container = document.getElementById('productsList');
         container.innerHTML = '';
 
-        if (products.length === 0) {
+        if (displayProducts.length === 0) {
             container.innerHTML = '<p>No products found. Add your first product!</p>';
             return;
         }
 
-        products.forEach(product => {
+        displayProducts.forEach(product => {
             const card = createProductCard(product);
             container.appendChild(card);
         });
@@ -215,6 +235,27 @@ async function loadProducts() {
         document.getElementById('productsList').innerHTML = 
             '<p class="error">Error loading products. Make sure API is configured.</p>';
     }
+}
+
+// Get products with pending changes applied
+function getDisplayProducts() {
+    let products = JSON.parse(JSON.stringify(originalData.products));
+    
+    // Apply updates
+    pendingChanges.products.update.forEach(update => {
+        const index = products.findIndex(p => p.id === update.id);
+        if (index !== -1) {
+            products[index] = { ...products[index], ...update };
+        }
+    });
+    
+    // Add new items
+    products.push(...pendingChanges.products.create);
+    
+    // Remove deleted items
+    products = products.filter(p => !pendingChanges.products.delete.includes(p.id));
+    
+    return products;
 }
 
 function createProductCard(product) {
@@ -263,7 +304,14 @@ function openProductModal(productId = null) {
 
 async function loadProductData(productId) {
     try {
-        const product = await apiCall(`/products/${productId}`);
+        const displayProducts = getDisplayProducts();
+        const product = displayProducts.find(p => p.id === productId);
+        
+        if (!product) {
+            showNotification('Product not found', 'error');
+            return;
+        }
+        
         document.getElementById('productId').value = product.id;
         document.getElementById('productName').value = product.name;
         document.getElementById('productCategory').value = product.category;
@@ -289,15 +337,28 @@ document.getElementById('productForm')?.addEventListener('submit', async (e) => 
 
     try {
         if (productId) {
-            await apiCall(`/products/${productId}`, 'PUT', productData);
-            showNotification('Product updated successfully', 'success');
+            // Remove from create if it was a new item
+            pendingChanges.products.create = pendingChanges.products.create.filter(p => p.id !== productId);
+            
+            // Add to update queue
+            const existingUpdateIndex = pendingChanges.products.update.findIndex(p => p.id === productId);
+            if (existingUpdateIndex !== -1) {
+                pendingChanges.products.update[existingUpdateIndex] = { ...productData, id: productId };
+            } else {
+                pendingChanges.products.update.push({ ...productData, id: productId });
+            }
+            
+            showNotification('Product changes saved locally. Click "Save All Changes" to commit.', 'info');
         } else {
-            await apiCall('/products', 'POST', productData);
-            showNotification('Product added successfully', 'success');
+            // Add new product with temporary ID
+            const newId = 'temp_' + Date.now();
+            pendingChanges.products.create.push({ ...productData, id: newId });
+            showNotification('Product added locally. Click "Save All Changes" to commit.', 'info');
         }
         
         closeModal('productModal');
         loadProducts();
+        updatePendingCount();
     } catch (error) {
         showNotification('Error saving product', 'error');
     }
@@ -307,9 +368,20 @@ async function deleteProduct(productId) {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
-        await apiCall(`/products/${productId}`, 'DELETE');
-        showNotification('Product deleted successfully', 'success');
+        // Remove from create queue if it's a new item
+        pendingChanges.products.create = pendingChanges.products.create.filter(p => p.id !== productId);
+        
+        // Remove from update queue
+        pendingChanges.products.update = pendingChanges.products.update.filter(p => p.id !== productId);
+        
+        // Add to delete queue (if not already there)
+        if (!pendingChanges.products.delete.includes(productId) && !productId.startsWith('temp_')) {
+            pendingChanges.products.delete.push(productId);
+        }
+        
+        showNotification('Product marked for deletion. Click "Save All Changes" to commit.', 'info');
         loadProducts();
+        updatePendingCount();
     } catch (error) {
         showNotification('Error deleting product', 'error');
     }
@@ -323,15 +395,18 @@ function editProduct(productId) {
 async function loadGallery() {
     try {
         const gallery = await apiCall('/gallery');
+        originalData.gallery = JSON.parse(JSON.stringify(gallery)); // Deep copy
+        
+        const displayGallery = getDisplayGallery();
         const container = document.getElementById('galleryList');
         container.innerHTML = '';
 
-        if (gallery.length === 0) {
+        if (displayGallery.length === 0) {
             container.innerHTML = '<p>No gallery images found. Add your first image!</p>';
             return;
         }
 
-        gallery.forEach(item => {
+        displayGallery.forEach(item => {
             const card = createGalleryCard(item);
             container.appendChild(card);
         });
@@ -339,6 +414,22 @@ async function loadGallery() {
         document.getElementById('galleryList').innerHTML = 
             '<p class="error">Error loading gallery. Make sure API is configured.</p>';
     }
+}
+
+function getDisplayGallery() {
+    let gallery = JSON.parse(JSON.stringify(originalData.gallery));
+    
+    pendingChanges.gallery.update.forEach(update => {
+        const index = gallery.findIndex(g => g.id === update.id);
+        if (index !== -1) {
+            gallery[index] = { ...gallery[index], ...update };
+        }
+    });
+    
+    gallery.push(...pendingChanges.gallery.create);
+    gallery = gallery.filter(g => !pendingChanges.gallery.delete.includes(g.id));
+    
+    return gallery;
 }
 
 function createGalleryCard(item) {
@@ -388,15 +479,23 @@ document.getElementById('galleryForm')?.addEventListener('submit', async (e) => 
 
     try {
         if (itemId) {
-            await apiCall(`/gallery/${itemId}`, 'PUT', galleryData);
-            showNotification('Gallery image updated', 'success');
+            pendingChanges.gallery.create = pendingChanges.gallery.create.filter(g => g.id !== itemId);
+            const existingUpdateIndex = pendingChanges.gallery.update.findIndex(g => g.id === itemId);
+            if (existingUpdateIndex !== -1) {
+                pendingChanges.gallery.update[existingUpdateIndex] = { ...galleryData, id: itemId };
+            } else {
+                pendingChanges.gallery.update.push({ ...galleryData, id: itemId });
+            }
+            showNotification('Gallery changes saved locally. Click "Save All Changes" to commit.', 'info');
         } else {
-            await apiCall('/gallery', 'POST', galleryData);
-            showNotification('Gallery image added', 'success');
+            const newId = 'temp_' + Date.now();
+            pendingChanges.gallery.create.push({ ...galleryData, id: newId });
+            showNotification('Gallery image added locally. Click "Save All Changes" to commit.', 'info');
         }
         
         closeModal('galleryModal');
         loadGallery();
+        updatePendingCount();
     } catch (error) {
         showNotification('Error saving gallery image', 'error');
     }
@@ -411,22 +510,18 @@ async function deleteGalleryItem(itemId) {
     }
 
     try {
-        console.log('[DEBUG] Making DELETE request to:', `/api/gallery/${itemId}`);
-        const token = localStorage.getItem(STORAGE_KEY);
-        console.log('[DEBUG] Token exists:', !!token);
+        pendingChanges.gallery.create = pendingChanges.gallery.create.filter(g => g.id !== itemId);
+        pendingChanges.gallery.update = pendingChanges.gallery.update.filter(g => g.id !== itemId);
         
-        const result = await apiCall(`/gallery/${itemId}`, 'DELETE');
-        console.log('[DEBUG] Delete response:', result);
+        if (!pendingChanges.gallery.delete.includes(itemId) && !itemId.startsWith('temp_')) {
+            pendingChanges.gallery.delete.push(itemId);
+        }
         
-        showNotification('Gallery image deleted', 'success');
+        showNotification('Gallery image marked for deletion. Click "Save All Changes" to commit.', 'info');
         loadGallery();
+        updatePendingCount();
     } catch (error) {
         console.error('[DEBUG] Error deleting gallery item:', error);
-        console.error('[DEBUG] Error details:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        });
         showNotification('Error deleting gallery image: ' + error.message, 'error');
     }
 }
@@ -435,15 +530,18 @@ async function deleteGalleryItem(itemId) {
 async function loadHeroImages() {
     try {
         const heroes = await apiCall('/hero');
+        originalData.hero = JSON.parse(JSON.stringify(heroes)); // Deep copy
+        
+        const displayHeroes = getDisplayHeroes();
         const container = document.getElementById('heroList');
         container.innerHTML = '';
 
-        if (heroes.length === 0) {
+        if (displayHeroes.length === 0) {
             container.innerHTML = '<p>No hero images found. Add your first hero image!</p>';
             return;
         }
 
-        heroes.forEach(item => {
+        displayHeroes.forEach(item => {
             const card = createHeroCard(item);
             container.appendChild(card);
         });
@@ -451,6 +549,22 @@ async function loadHeroImages() {
         document.getElementById('heroList').innerHTML = 
             '<p class="error">Error loading hero images. Make sure API is configured.</p>';
     }
+}
+
+function getDisplayHeroes() {
+    let heroes = JSON.parse(JSON.stringify(originalData.hero));
+    
+    pendingChanges.hero.update.forEach(update => {
+        const index = heroes.findIndex(h => h.id === update.id);
+        if (index !== -1) {
+            heroes[index] = { ...heroes[index], ...update };
+        }
+    });
+    
+    heroes.push(...pendingChanges.hero.create);
+    heroes = heroes.filter(h => !pendingChanges.hero.delete.includes(h.id));
+    
+    return heroes;
 }
 
 function createHeroCard(item) {
@@ -499,15 +613,23 @@ document.getElementById('heroForm')?.addEventListener('submit', async (e) => {
 
     try {
         if (itemId) {
-            await apiCall(`/hero/${itemId}`, 'PUT', heroData);
-            showNotification('Hero image updated', 'success');
+            pendingChanges.hero.create = pendingChanges.hero.create.filter(h => h.id !== itemId);
+            const existingUpdateIndex = pendingChanges.hero.update.findIndex(h => h.id === itemId);
+            if (existingUpdateIndex !== -1) {
+                pendingChanges.hero.update[existingUpdateIndex] = { ...heroData, id: itemId };
+            } else {
+                pendingChanges.hero.update.push({ ...heroData, id: itemId });
+            }
+            showNotification('Hero image changes saved locally. Click "Save All Changes" to commit.', 'info');
         } else {
-            await apiCall('/hero', 'POST', heroData);
-            showNotification('Hero image added', 'success');
+            const newId = 'temp_' + Date.now();
+            pendingChanges.hero.create.push({ ...heroData, id: newId });
+            showNotification('Hero image added locally. Click "Save All Changes" to commit.', 'info');
         }
         
         closeModal('heroModal');
         loadHeroImages();
+        updatePendingCount();
     } catch (error) {
         showNotification('Error saving hero image', 'error');
     }
@@ -517,9 +639,16 @@ async function deleteHeroImage(itemId) {
     if (!confirm('Are you sure you want to delete this hero image?')) return;
 
     try {
-        await apiCall(`/hero/${itemId}`, 'DELETE');
-        showNotification('Hero image deleted', 'success');
+        pendingChanges.hero.create = pendingChanges.hero.create.filter(h => h.id !== itemId);
+        pendingChanges.hero.update = pendingChanges.hero.update.filter(h => h.id !== itemId);
+        
+        if (!pendingChanges.hero.delete.includes(itemId) && !itemId.startsWith('temp_')) {
+            pendingChanges.hero.delete.push(itemId);
+        }
+        
+        showNotification('Hero image marked for deletion. Click "Save All Changes" to commit.', 'info');
         loadHeroImages();
+        updatePendingCount();
     } catch (error) {
         showNotification('Error deleting hero image', 'error');
     }
@@ -529,10 +658,15 @@ async function deleteHeroImage(itemId) {
 async function loadContent() {
     try {
         const content = await apiCall('/content');
-        if (content.about) document.getElementById('aboutText').value = content.about;
-        if (content.email) document.getElementById('contactEmail').value = content.email;
-        if (content.phone) document.getElementById('contactPhone').value = content.phone;
-        if (content.whatsapp) document.getElementById('whatsappNumber').value = content.whatsapp;
+        originalData.content = JSON.parse(JSON.stringify(content)); // Deep copy
+        
+        // Show pending changes if any, otherwise show original
+        const displayContent = pendingChanges.content.update || originalData.content;
+        
+        if (displayContent.about) document.getElementById('aboutText').value = displayContent.about;
+        if (displayContent.email) document.getElementById('contactEmail').value = displayContent.email;
+        if (displayContent.phone) document.getElementById('contactPhone').value = displayContent.phone;
+        if (displayContent.whatsapp) document.getElementById('whatsappNumber').value = displayContent.whatsapp;
     } catch (error) {
         console.error('Error loading content:', error);
     }
@@ -549,8 +683,9 @@ document.getElementById('contentForm')?.addEventListener('submit', async (e) => 
     };
 
     try {
-        await apiCall('/content', 'PUT', contentData);
-        showNotification('Content updated successfully', 'success');
+        pendingChanges.content.update = contentData;
+        showNotification('Content changes saved locally. Click "Save All Changes" to commit.', 'info');
+        updatePendingCount();
     } catch (error) {
         showNotification('Error updating content', 'error');
     }
@@ -608,5 +743,102 @@ function showNotification(message, type = 'success') {
 }
 
 function setupEventListeners() {
-    // Additional event listeners can be added here
+    // Save All Changes button
+    document.getElementById('saveAllBtn')?.addEventListener('click', saveAllChanges);
+}
+
+// Update pending changes count
+function updatePendingCount() {
+    let count = 0;
+    count += pendingChanges.products.create.length + pendingChanges.products.update.length + pendingChanges.products.delete.length;
+    count += pendingChanges.gallery.create.length + pendingChanges.gallery.update.length + pendingChanges.gallery.delete.length;
+    count += pendingChanges.hero.create.length + pendingChanges.hero.update.length + pendingChanges.hero.delete.length;
+    if (pendingChanges.content.update) count += 1;
+    
+    const saveBtn = document.getElementById('saveAllBtn');
+    const countBadge = document.getElementById('pendingCount');
+    
+    if (count > 0) {
+        saveBtn.style.display = 'inline-flex';
+        countBadge.textContent = count;
+    } else {
+        saveBtn.style.display = 'none';
+    }
+}
+
+// Save all pending changes
+async function saveAllChanges() {
+    const saveBtn = document.getElementById('saveAllBtn');
+    const originalText = saveBtn.innerHTML;
+    
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    try {
+        // Save products
+        for (const item of pendingChanges.products.create) {
+            const { id, ...itemData } = item; // Remove temp ID
+            await apiCall('/products', 'POST', itemData);
+        }
+        for (const item of pendingChanges.products.update) {
+            await apiCall(`/products/${item.id}`, 'PUT', item);
+        }
+        for (const id of pendingChanges.products.delete) {
+            if (!id.startsWith('temp_')) {
+                await apiCall(`/products/${id}`, 'DELETE');
+            }
+        }
+        
+        // Save gallery
+        for (const item of pendingChanges.gallery.create) {
+            const { id, ...itemData } = item; // Remove temp ID
+            await apiCall('/gallery', 'POST', itemData);
+        }
+        for (const item of pendingChanges.gallery.update) {
+            await apiCall(`/gallery/${item.id}`, 'PUT', item);
+        }
+        for (const id of pendingChanges.gallery.delete) {
+            if (!id.startsWith('temp_')) {
+                await apiCall(`/gallery/${id}`, 'DELETE');
+            }
+        }
+        
+        // Save hero images
+        for (const item of pendingChanges.hero.create) {
+            const { id, ...itemData } = item; // Remove temp ID
+            await apiCall('/hero', 'POST', itemData);
+        }
+        for (const item of pendingChanges.hero.update) {
+            await apiCall(`/hero/${item.id}`, 'PUT', item);
+        }
+        for (const id of pendingChanges.hero.delete) {
+            if (!id.startsWith('temp_')) {
+                await apiCall(`/hero/${id}`, 'DELETE');
+            }
+        }
+        
+        // Save content
+        if (pendingChanges.content.update) {
+            await apiCall('/content', 'PUT', pendingChanges.content.update);
+        }
+        
+        // Clear pending changes
+        pendingChanges.products = { create: [], update: [], delete: [] };
+        pendingChanges.gallery = { create: [], update: [], delete: [] };
+        pendingChanges.hero = { create: [], update: [], delete: [] };
+        pendingChanges.content.update = null;
+        
+        updatePendingCount();
+        showNotification('All changes saved successfully!', 'success');
+        
+        // Reload data to reflect changes
+        await loadData();
+        
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        showNotification('Error saving changes: ' + error.message, 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+    }
 }

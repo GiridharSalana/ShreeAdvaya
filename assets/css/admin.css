@@ -232,6 +232,38 @@ body {
     font-size: 1.8rem;
 }
 
+.add-button-container {
+    margin-top: 30px;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #45a049, #4CAF50);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.pending-badge {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
 /* Items Grid */
 .items-grid {
     display: grid;

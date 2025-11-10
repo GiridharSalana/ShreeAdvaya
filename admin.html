@@ -32,9 +32,14 @@
         <header class="admin-header">
             <div class="header-content">
                 <h1><i class="fas fa-cog"></i> ShreeAdvaya Admin Panel</h1>
-                <button id="logoutBtn" class="btn btn-secondary">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
+                <div class="header-right">
+                    <button id="saveAllBtn" class="btn btn-success" style="display: none;">
+                        <i class="fas fa-save"></i> Save All Changes <span id="pendingCount" class="pending-badge">0</span>
+                    </button>
+                    <button id="logoutBtn" class="btn btn-secondary">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -87,12 +92,14 @@
                 <div id="heroTab" class="tab-content">
                     <div class="section-header">
                         <h2>Manage Hero Images</h2>
-                        <button class="btn btn-primary" onclick="openHeroModal()">
-                            <i class="fas fa-plus"></i> Add Hero Image
-                        </button>
                     </div>
                     <div id="heroList" class="items-grid">
                         <!-- Hero images will be loaded here -->
+                    </div>
+                    <div class="add-button-container">
+                        <button class="btn btn-primary" onclick="openHeroModal()">
+                            <i class="fas fa-plus"></i> Add Hero Image
+                        </button>
                     </div>
                 </div>
 
