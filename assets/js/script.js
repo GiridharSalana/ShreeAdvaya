@@ -816,18 +816,6 @@ window.addEventListener("scroll", () => {
   }
 });
 
-// Add smooth hover effect for product cards
-if (productCards && productCards.length > 0) {
-    productCards.forEach((card) => {
-        card.addEventListener("mouseenter", function () {
-            this.style.transform = "translateY(-15px)";
-        });
-
-        card.addEventListener("mouseleave", function () {
-            this.style.transform = "translateY(0)";
-        });
-    });
-}
 
 // Keyboard navigation support
 document.addEventListener("keydown", (e) => {
