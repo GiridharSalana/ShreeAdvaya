@@ -440,18 +440,24 @@ function createLightbox(src, alt) {
   const content = lightbox.querySelector(".lightbox-content");
   content.style.cssText = `
         position: relative;
-        max-width: 90%;
-        max-height: 90%;
+        max-width: 90vw;
+        max-height: 90vh;
         cursor: default;
         animation: zoomIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     `;
 
   const img = lightbox.querySelector("img");
   img.style.cssText = `
-        width: 100%;
-        height: 100%;
+        max-width: 100%;
+        max-height: 90vh;
+        width: auto;
+        height: auto;
         object-fit: contain;
         border-radius: 10px;
+        display: block;
     `;
 
   const closeBtn = lightbox.querySelector(".lightbox-close");
@@ -464,6 +470,13 @@ function createLightbox(src, alt) {
         cursor: pointer;
         z-index: 10001;
         transition: transform 0.3s ease;
+        background: rgba(0, 0, 0, 0.5);
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
     `;
 
   closeBtn.addEventListener("mouseenter", () => {

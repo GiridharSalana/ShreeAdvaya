@@ -489,14 +489,18 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
+    left: auto;
+    max-width: calc(100vw - 40px);
     padding: 15px 25px;
     border-radius: 8px;
     color: white;
     font-weight: 500;
     z-index: 10000;
-    transform: translateX(400px);
+    transform: translateX(calc(100% + 40px));
     transition: transform 0.3s;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .notification.show {
@@ -595,5 +599,13 @@ body {
 
     .admin-container {
         min-height: calc(100vh - 220px);
+    }
+
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100vw - 20px);
+        padding: 12px 20px;
+        font-size: 0.9rem;
     }
 }
