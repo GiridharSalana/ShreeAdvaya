@@ -1108,7 +1108,9 @@ h6 {
     }
 
     .products-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 280px));
+        justify-content: center;
+        justify-items: center;
     }
 
     .gallery-grid {

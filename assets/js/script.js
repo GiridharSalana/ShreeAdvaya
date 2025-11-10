@@ -250,25 +250,32 @@ function initProductCards(cards) {
             
             const category = btn.getAttribute("data-category");
             
-            cards.forEach((card, index) => {
-                if (category === "all" || card.getAttribute("data-category") === category) {
-                    card.style.display = "block";
-                    card.style.opacity = "0";
-                    card.style.transform = "translateY(30px)";
-                    
+            // First, hide all cards instantly without animation to prevent layout jumps
+            cards.forEach((card) => {
+                card.style.display = "none";
+                card.style.opacity = "0";
+                card.style.transform = "translateY(0)";
+                card.style.transition = "none";
+            });
+            
+            // Then show matching cards with animation
+            const visibleCards = Array.from(cards).filter(card => 
+                category === "all" || card.getAttribute("data-category") === category
+            );
+            
+            visibleCards.forEach((card, index) => {
+                card.style.display = "block";
+                card.style.opacity = "0";
+                card.style.transform = "translateY(20px)";
+                
+                // Use requestAnimationFrame for smoother animation
+                requestAnimationFrame(() => {
                     setTimeout(() => {
-                        card.style.transition = "opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+                        card.style.transition = "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
                         card.style.opacity = "1";
                         card.style.transform = "translateY(0)";
-                    }, index * 80);
-                } else {
-                    card.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-                    card.style.opacity = "0";
-                    card.style.transform = "translateY(20px)";
-                    setTimeout(() => {
-                        card.style.display = "none";
-                    }, 300);
-                }
+                    }, index * 50);
+                });
             });
         });
     });
