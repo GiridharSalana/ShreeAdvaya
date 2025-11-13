@@ -66,9 +66,43 @@ export function decryptPassword(encryptedPassword) {
 }
 
 /**
+ * Get default Admin user object
+ */
+function getDefaultAdminUser() {
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+        // Fallback: Plain text for backward compatibility (if ADMIN_PASSWORD not set)
+        console.warn('ADMIN_PASSWORD not set. Using plain text password (not recommended).');
+        return {
+            username: 'Admin',
+            encryptedPassword: 'admin', // Plain text for backward compat
+            role: 'admin',
+            email: 'admin@shreeadvaya.com',
+            createdAt: new Date().toISOString(),
+            isPlainText: true, // Flag for backward compatibility
+            isDefault: true // Flag to indicate this is the default admin
+        };
+    }
+    
+    // Create default Admin user with encrypted password
+    const encryptedPassword = encryptPassword(adminPassword);
+    return {
+        username: 'Admin',
+        encryptedPassword: encryptedPassword,
+        role: 'admin',
+        email: 'admin@shreeadvaya.com',
+        createdAt: new Date().toISOString(),
+        isDefault: true // Flag to indicate this is the default admin
+    };
+}
+
+/**
  * Load users from GitHub (or fallback to environment variable)
+ * Always ensures default "Admin" user exists
  */
 export async function loadUsers() {
+    let users = [];
+    
     try {
         // Try to load from GitHub
         const githubToken = process.env.GITHUB_TOKEN;
@@ -87,8 +121,8 @@ export async function loadUsers() {
             );
             
             if (response.ok) {
-                const users = await response.json();
-                return Array.isArray(users) ? users : [];
+                const loadedUsers = await response.json();
+                users = Array.isArray(loadedUsers) ? loadedUsers : [];
             }
         }
     } catch (error) {
@@ -96,26 +130,38 @@ export async function loadUsers() {
     }
     
     // Fallback: Load from environment variable (for initial setup)
-    const usersEnv = process.env.ADMIN_USERS;
-    if (usersEnv) {
-        return usersEnv.split(',').map(userStr => {
-            const [username, encryptedPassword, role = 'admin'] = userStr.split(':');
-            return { username, encryptedPassword, role };
-        });
+    if (users.length === 0) {
+        const usersEnv = process.env.ADMIN_USERS;
+        if (usersEnv) {
+            users = usersEnv.split(',').map(userStr => {
+                const [username, encryptedPassword, role = 'admin'] = userStr.split(':');
+                return { username, encryptedPassword, role };
+            });
+        }
     }
     
-    // Default: Single admin user from ADMIN_PASSWORD (backward compatibility)
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (adminPassword) {
-        return [{
-            username: 'admin',
-            encryptedPassword: adminPassword, // Plain text for backward compat
-            role: 'admin',
-            isPlainText: true // Flag for backward compatibility
-        }];
+    // Always ensure default "Admin" user exists
+    const defaultAdmin = getDefaultAdminUser();
+    const adminExists = users.some(u => u.username.toLowerCase() === 'admin');
+    
+    if (!adminExists) {
+        // Add default Admin user at the beginning of the array
+        users.unshift(defaultAdmin);
+    } else {
+        // Update existing Admin user to ensure it has isDefault flag and correct properties
+        const adminIndex = users.findIndex(u => u.username.toLowerCase() === 'admin');
+        if (adminIndex !== -1) {
+            users[adminIndex] = {
+                ...users[adminIndex],
+                ...defaultAdmin,
+                // Preserve existing encryptedPassword if it's different from default
+                encryptedPassword: users[adminIndex].encryptedPassword || defaultAdmin.encryptedPassword,
+                isDefault: true
+            };
+        }
     }
     
-    return [];
+    return users;
 }
 
 /**

@@ -1,8 +1,7 @@
-// API route: /api/auth/register
-// Handles new user registration
-// Requires authentication (admin only)
+// API route: /api/auth/users-delete
+// Deletes a user (admin only)
 
-import { loadUsers, encryptPassword } from './users.js';
+import { loadUsers } from './users.js';
 import { verifyToken } from './jwt.js';
 
 // Helper function to get file SHA from GitHub
@@ -28,7 +27,7 @@ async function getFileSHA(token, owner, repo, path) {
     return null;
 }
 
-async function saveFileToGitHub(token, owner, repo, path, data) {
+async function saveFileToGitHub(token, owner, repo, path, data, message) {
     const sha = await getFileSHA(token, owner, repo, path);
     
     const content = JSON.stringify(data, null, 2);
@@ -45,7 +44,7 @@ async function saveFileToGitHub(token, owner, repo, path, data) {
                 'X-GitHub-Api-Version': '2022-11-28'
             },
             body: JSON.stringify({
-                message: `Add new user: ${data[data.length - 1]?.username || 'user'} - ${new Date().toISOString()}`,
+                message: message || `Delete user - ${new Date().toISOString()}`,
                 content: encodedContent,
                 sha: sha
             })
@@ -76,7 +75,7 @@ export default async function handler(req, res) {
         res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
     }
     
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
@@ -84,32 +83,26 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    if (req.method !== 'POST') {
+    if (req.method !== 'DELETE') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Check if any users exist
-    const existingUsers = await loadUsers();
-    const isFirstUser = existingUsers.length === 0;
+    // Verify authentication
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
     
-    // If users exist, require admin authentication
-    if (!isFirstUser) {
-        const authHeader = req.headers.authorization;
-        const token = authHeader?.replace('Bearer ', '') || req.body?.token;
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Authentication required. Please login as admin to register new users.' });
-        }
+    if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        const verification = verifyToken(token);
-        if (!verification.valid) {
-            return res.status(401).json({ error: 'Invalid or expired token' });
-        }
+    const verification = verifyToken(token);
+    if (!verification.valid) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+    }
 
-        // Only admins can register new users
-        if (verification.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Admin access required for user registration' });
-        }
+    // Only admins can delete users
+    if (verification.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
     }
 
     // Parse request body
@@ -120,56 +113,35 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid JSON body' });
     }
 
-    const { username, password, role = 'editor', email } = body;
+    const { username } = body;
 
     // Validate input
-    if (!username || typeof username !== 'string' || username.trim().length === 0) {
+    if (!username || typeof username !== 'string') {
         return res.status(400).json({ error: 'Username is required' });
     }
 
-    if (!password || typeof password !== 'string' || password.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-
-    // Validate username format (alphanumeric and underscore, 3-20 chars)
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-        return res.status(400).json({ error: 'Username must be 3-20 characters and contain only letters, numbers, and underscores' });
-    }
-
-    // Validate role
-    const validRoles = ['admin', 'editor', 'viewer'];
-    if (!validRoles.includes(role)) {
-        return res.status(400).json({ error: `Role must be one of: ${validRoles.join(', ')}` });
-    }
-
     try {
-        // Load existing users (reload to get latest)
         const users = await loadUsers();
-
-        // Check if username already exists
-        if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
-            return res.status(409).json({ error: 'Username already exists' });
+        const userIndex = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+        
+        if (userIndex === -1) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
-        // Encrypt password
-        const encryptedPassword = encryptPassword(password);
+        // Prevent deleting the default admin user
+        if (users[userIndex].isDefault) {
+            return res.status(400).json({ error: 'Cannot delete default admin user' });
+        }
 
-        // For first user, always set role to admin
-        const finalRole = isFirstUser ? 'admin' : role;
+        // Prevent deleting yourself
+        if (users[userIndex].username.toLowerCase() === verification.user.username.toLowerCase()) {
+            return res.status(400).json({ error: 'Cannot delete your own account' });
+        }
 
-        // Create new user object
-        const newUser = {
-            username: username.trim(),
-            encryptedPassword: encryptedPassword,
-            role: finalRole,
-            email: email || `${username}@shreeadvaya.com`,
-            createdAt: new Date().toISOString()
-        };
+        // Remove user
+        users.splice(userIndex, 1);
 
-        // Add new user to array
-        users.push(newUser);
-
-        // Ensure Admin user is always included (loadUsers ensures it exists, but we need to save it)
+        // Ensure Admin user is always included before saving
         const adminPassword = process.env.ADMIN_PASSWORD;
         if (adminPassword) {
             const { encryptPassword } = await import('./users.js');
@@ -184,12 +156,6 @@ export default async function handler(req, res) {
                     createdAt: new Date().toISOString(),
                     isDefault: true
                 });
-            } else {
-                // Ensure Admin user has isDefault flag
-                const adminIndex = users.findIndex(u => u.username.toLowerCase() === 'admin');
-                if (adminIndex !== -1) {
-                    users[adminIndex].isDefault = true;
-                }
             }
         }
 
@@ -202,22 +168,24 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'GitHub configuration missing. Please set GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO environment variables.' });
         }
 
-        await saveFileToGitHub(githubToken, owner, repo, 'data/users.json', users);
+        await saveFileToGitHub(
+            githubToken, 
+            owner, 
+            repo, 
+            'data/users.json', 
+            users,
+            `Delete user: ${username} - ${new Date().toISOString()}`
+        );
 
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
-            message: 'User registered successfully',
-            user: {
-                username: newUser.username,
-                role: newUser.role,
-                email: newUser.email
-            }
+            message: 'User deleted successfully'
         });
 
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Error deleting user:', error);
         return res.status(500).json({ 
-            error: 'Failed to register user: ' + error.message 
+            error: 'Failed to delete user: ' + error.message 
         });
     }
 }

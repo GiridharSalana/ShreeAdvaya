@@ -2,147 +2,7 @@
 const API_BASE = '/api';
 const STORAGE_KEY = 'admin_token';
 
-// Registration form handler
-document.getElementById('showRegisterLink')?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    
-    // Check if user is logged in
-    const token = localStorage.getItem(STORAGE_KEY);
-    const registerNote = document.getElementById('registerNote');
-    
-    if (token) {
-        // User is logged in - check if they're admin
-        try {
-            const response = await fetch(`${API_BASE}/auth/verify-multi`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ token })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.user && data.user.role === 'admin') {
-                    registerNote.textContent = 'Registering new user as admin';
-                } else {
-                    registerNote.textContent = 'Admin access required to register new users';
-                }
-            } else {
-                registerNote.textContent = 'Admin access required to register new users';
-            }
-        } catch (error) {
-            registerNote.textContent = 'Admin access required to register new users';
-        }
-    } else {
-        // No token - might be first user registration
-        registerNote.textContent = 'Register first admin user (no login required)';
-    }
-    
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('registerBox').style.display = 'block';
-    document.getElementById('registerError').classList.remove('show');
-    document.getElementById('registerSuccess').style.display = 'none';
-});
-
-document.getElementById('cancelRegisterBtn')?.addEventListener('click', () => {
-    document.getElementById('loginBox').style.display = 'block';
-    document.getElementById('registerBox').style.display = 'none';
-    document.getElementById('registerForm').reset();
-    document.getElementById('registerError').classList.remove('show');
-    document.getElementById('registerSuccess').style.display = 'none';
-});
-
-document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const username = document.getElementById('regUsername').value.trim();
-    const password = document.getElementById('regPassword').value;
-    const confirmPassword = document.getElementById('regConfirmPassword').value;
-    const email = document.getElementById('regEmail').value.trim();
-    const role = document.getElementById('regRole').value;
-    
-    const errorMsg = document.getElementById('registerError');
-    const successMsg = document.getElementById('registerSuccess');
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    
-    // Reset messages
-    errorMsg.classList.remove('show');
-    successMsg.style.display = 'none';
-    
-    // Validation
-    if (password !== confirmPassword) {
-        errorMsg.textContent = 'Passwords do not match';
-        errorMsg.classList.add('show');
-        return;
-    }
-    
-    if (password.length < 6) {
-        errorMsg.textContent = 'Password must be at least 6 characters';
-        errorMsg.classList.add('show');
-        return;
-    }
-    
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-        errorMsg.textContent = 'Username must be 3-20 characters and contain only letters, numbers, and underscores';
-        errorMsg.classList.add('show');
-        return;
-    }
-    
-    // Disable button during registration
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
-    
-    try {
-        const token = localStorage.getItem(STORAGE_KEY);
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-        
-        // Add authorization header if token exists (not required for first user)
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        const response = await fetch(`${API_BASE}/auth/register`, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                username,
-                password,
-                email: email || undefined,
-                role
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            const isFirstUser = !token;
-            successMsg.textContent = `User "${data.user.username}" registered successfully!${isFirstUser ? ' You can now login.' : ''}`;
-            successMsg.style.display = 'block';
-            document.getElementById('registerForm').reset();
-            
-            // Auto-hide success message and return to login after 3 seconds
-            setTimeout(() => {
-                successMsg.style.display = 'none';
-                document.getElementById('loginBox').style.display = 'block';
-                document.getElementById('registerBox').style.display = 'none';
-            }, 3000);
-        } else {
-            errorMsg.textContent = data.error || 'Registration failed';
-            errorMsg.classList.add('show');
-        }
-    } catch (error) {
-        errorMsg.textContent = error.message || 'Registration failed. Please try again.';
-        errorMsg.classList.add('show');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    }
-});
+// User management functionality moved to admin panel
 
 // Batch Save System - Track all changes locally
 const pendingChanges = {
@@ -423,7 +283,8 @@ async function loadData() {
             loadProducts(),
             loadGallery(),
             loadHeroImages(),
-            loadContent()
+            loadContent(),
+            loadUsers()
         ]);
     } catch (error) {
         console.error('Error loading data:', error);
@@ -1161,5 +1022,196 @@ async function saveAllChanges() {
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = originalText;
+    }
+}
+
+// User Management
+let usersData = [];
+
+async function loadUsers() {
+    try {
+        const response = await apiCall('/auth/users-list');
+        usersData = response.users || [];
+        
+        const container = document.getElementById('usersList');
+        container.innerHTML = '';
+
+        if (usersData.length === 0) {
+            container.innerHTML = '<p>No users found. Add your first user!</p>';
+            return;
+        }
+
+        usersData.forEach(user => {
+            const card = createUserCard(user);
+            container.appendChild(card);
+        });
+    } catch (error) {
+        document.getElementById('usersList').innerHTML = 
+            '<p class="error">Error loading users. Make sure you have admin access.</p>';
+    }
+}
+
+function createUserCard(user) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    
+    const roleBadge = user.role === 'admin' ? 'badge-admin' : user.role === 'editor' ? 'badge-editor' : 'badge-viewer';
+    const roleColor = user.role === 'admin' ? '#d4af37' : user.role === 'editor' ? '#4a90e2' : '#95a5a6';
+    
+    card.innerHTML = `
+        <div class="item-card-body" style="padding: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, ${roleColor}, ${roleColor}dd); display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; font-weight: bold;">
+                    ${user.username.charAt(0).toUpperCase()}
+                </div>
+                <div style="flex: 1;">
+                    <div class="item-card-title" style="margin-bottom: 5px;">${user.username}</div>
+                    <div style="font-size: 0.9rem; color: #666;">${user.email || `${user.username}@shreeadvaya.com`}</div>
+                </div>
+                <span style="background: ${roleColor}; color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 500; text-transform: capitalize;">
+                    ${user.role}
+                </span>
+            </div>
+            ${user.isDefault ? '<div style="color: #d4af37; font-size: 0.85rem; margin-bottom: 10px;"><i class="fas fa-shield-alt"></i> Default Admin User</div>' : ''}
+            <div class="item-card-actions">
+                <button class="btn btn-primary" onclick="editUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot edit default admin user"' : ''}>
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-danger" onclick="deleteUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot delete default admin user"' : ''}>
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    `;
+    return card;
+}
+
+function openUserModal(username = null) {
+    const modal = document.getElementById('userModal');
+    const form = document.getElementById('userForm');
+    const title = document.getElementById('userModalTitle');
+    const errorMsg = document.getElementById('userError');
+
+    form.reset();
+    errorMsg.classList.remove('show');
+    document.getElementById('userUsername').value = '';
+
+    if (username) {
+        title.textContent = 'Edit User';
+        const user = usersData.find(u => u.username === username);
+        if (user) {
+            document.getElementById('userUsername').value = user.username;
+            document.getElementById('userName').value = user.username;
+            document.getElementById('userName').disabled = true; // Can't change username
+            document.getElementById('userPassword').required = false; // Password optional when editing
+            document.getElementById('userPassword').removeAttribute('minlength'); // Remove minlength requirement
+            document.getElementById('passwordRequired').style.display = 'none'; // Hide required asterisk
+            document.getElementById('userEmail').value = user.email || '';
+            document.getElementById('userRole').value = user.role;
+        }
+    } else {
+        title.textContent = 'Add User';
+        document.getElementById('userName').disabled = false;
+        document.getElementById('userPassword').required = true;
+        document.getElementById('userPassword').setAttribute('minlength', '6');
+        document.getElementById('passwordRequired').style.display = 'inline';
+    }
+
+    modal.classList.add('active');
+}
+
+function editUser(username) {
+    openUserModal(username);
+}
+
+document.getElementById('userForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const username = document.getElementById('userUsername').value || document.getElementById('userName').value.trim();
+    const password = document.getElementById('userPassword').value;
+    const email = document.getElementById('userEmail').value.trim();
+    const role = document.getElementById('userRole').value;
+    const isEdit = !!document.getElementById('userUsername').value;
+    
+    const errorMsg = document.getElementById('userError');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    errorMsg.classList.remove('show');
+    
+    // Validation
+    if (!isEdit && (!password || password.length < 6)) {
+        errorMsg.textContent = 'Password is required and must be at least 6 characters';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    if (isEdit && password && password.length < 6) {
+        errorMsg.textContent = 'Password must be at least 6 characters if provided';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        errorMsg.textContent = 'Username must be 3-20 characters and contain only letters, numbers, and underscores';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    try {
+        if (isEdit) {
+            // Update user
+            const updateData = { username, role, email };
+            if (password) {
+                updateData.password = password;
+            }
+            
+            await apiCall('/auth/users-update', 'PUT', updateData);
+            showNotification('User updated successfully!', 'success');
+        } else {
+            // Create new user
+            await apiCall('/auth/register', 'POST', {
+                username,
+                password,
+                email: email || undefined,
+                role
+            });
+            showNotification('User created successfully!', 'success');
+        }
+        
+        closeModal('userModal');
+        await loadUsers();
+    } catch (error) {
+        errorMsg.textContent = error.message || 'Failed to save user';
+        errorMsg.classList.add('show');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+});
+
+async function deleteUser(username) {
+    // Get current user from localStorage
+    const currentUserStr = localStorage.getItem('admin_user');
+    const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+    
+    if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) {
+        showNotification('Cannot delete your own account', 'error');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        await apiCall('/auth/users-delete', 'DELETE', { username });
+        showNotification('User deleted successfully!', 'success');
+        await loadUsers();
+    } catch (error) {
+        showNotification('Error deleting user: ' + error.message, 'error');
     }
 }

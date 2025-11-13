@@ -43,64 +43,6 @@
                     <button type="submit" class="btn btn-primary">Login</button>
                 </form>
                 <p class="error-message" id="loginError"></p>
-                <div style="margin-top: 20px; text-align: center;">
-                    <a href="#" id="showRegisterLink" style="color: #d4af37; text-decoration: none; font-size: 0.9rem;">
-                        <i class="fas fa-user-plus"></i> Register New User
-                    </a>
-                </div>
-            </div>
-
-            <!-- Registration Box -->
-            <div id="registerBox" class="login-box" style="display: none;">
-                <h1>
-                    <i class="fas fa-user-plus"></i>
-                    <span>Register New User</span>
-                </h1>
-                <p id="registerNote" style="color: #666; font-size: 0.9rem; margin-bottom: 20px; text-align: center;">
-                    Admin access required to register new users
-                </p>
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label for="regUsername">Username *</label>
-                        <input type="text" id="regUsername" required placeholder="Enter username (3-20 chars)" 
-                               pattern="[a-zA-Z0-9_]{3,20}" 
-                               title="3-20 characters, letters, numbers, and underscores only">
-                        <small style="color: #666; font-size: 0.85rem;">3-20 characters, letters, numbers, and underscores only</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="regPassword">Password *</label>
-                        <input type="password" id="regPassword" required placeholder="Enter password (min 6 characters)" 
-                               minlength="6">
-                        <small style="color: #666; font-size: 0.85rem;">Minimum 6 characters</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="regConfirmPassword">Confirm Password *</label>
-                        <input type="password" id="regConfirmPassword" required placeholder="Confirm password">
-                    </div>
-                    <div class="form-group">
-                        <label for="regEmail">Email</label>
-                        <input type="email" id="regEmail" placeholder="user@example.com (optional)">
-                    </div>
-                    <div class="form-group">
-                        <label for="regRole">Role *</label>
-                        <select id="regRole" required>
-                            <option value="editor">Editor</option>
-                            <option value="viewer">Viewer</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        <small style="color: #666; font-size: 0.85rem;">
-                            Editor: Can edit content | Viewer: Read-only | Admin: Full access
-                        </small>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> Register User
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="cancelRegisterBtn" style="margin-top: 10px; width: 100%;">
-                        Cancel
-                    </button>
-                </form>
-                <p class="error-message" id="registerError"></p>
-                <p class="success-message" id="registerSuccess" style="display: none;"></p>
             </div>
         </div>
     </div>
@@ -133,6 +75,9 @@
                     </a>
                     <a href="#content" class="nav-tab" data-tab="content">
                         <i class="fas fa-edit"></i> Content
+                    </a>
+                    <a href="#users" class="nav-tab" data-tab="users">
+                        <i class="fas fa-users"></i> User Management
                     </a>
                 </div>
             </div>
@@ -251,6 +196,21 @@
                         <button type="submit" class="btn btn-primary">Save Content</button>
                     </form>
                 </div>
+
+                <!-- User Management Tab -->
+                <div id="usersTab" class="tab-content">
+                    <div class="section-header">
+                        <h2>Manage Users</h2>
+                    </div>
+                    <div id="usersList" class="items-grid">
+                        <!-- Users will be loaded here -->
+                    </div>
+                    <div class="add-button-container">
+                        <button class="btn btn-primary" onclick="openUserModal()">
+                            <i class="fas fa-user-plus"></i> Add User
+                        </button>
+                    </div>
+                </div>
                 
                 <!-- Save All Changes Button -->
                 <div class="save-all-container">
@@ -359,6 +319,50 @@
                     <button type="submit" class="btn btn-primary">Save Image</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('userModal')">&times;</span>
+            <h2 id="userModalTitle">Add User</h2>
+            <form id="userForm">
+                <input type="hidden" id="userUsername">
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" id="userName" required placeholder="Enter username (3-20 chars)" 
+                           pattern="[a-zA-Z0-9_]{3,20}" 
+                           title="3-20 characters, letters, numbers, and underscores only">
+                    <small style="color: #666; font-size: 0.85rem;">3-20 characters, letters, numbers, and underscores only</small>
+                </div>
+                <div class="form-group">
+                    <label>Password <span id="passwordRequired">*</span></label>
+                    <input type="password" id="userPassword" placeholder="Enter password (min 6 characters)" 
+                           minlength="6">
+                    <small style="color: #666; font-size: 0.85rem;">Minimum 6 characters (leave blank to keep current password when editing)</small>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="userEmail" placeholder="user@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="userRole" required>
+                        <option value="editor">Editor</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <small style="color: #666; font-size: 0.85rem;">
+                        Editor: Can edit content | Viewer: Read-only | Admin: Full access
+                    </small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save User</button>
+                </div>
+            </form>
+            <p class="error-message" id="userError"></p>
         </div>
     </div>
 
