@@ -1,0 +1,17 @@
+[
+  {
+    "username": "Admin",
+    "encryptedPassword": "6153a937bce01d4f75a72f7665c5447f:c5f6e767f3047c69b89312c46b8d25ca:2cdea12494658808",
+    "role": "admin",
+    "email": "admin@shreeadvaya.com",
+    "createdAt": "2025-11-13T17:24:41.004Z",
+    "isDefault": true
+  },
+  {
+    "username": "Giri",
+    "encryptedPassword": "14c5ef55a26b68b887704c71eecec12f:6ce1b4f37bf90f46c24bd66fc30ff8b1:c7f012bb0921e5e8",
+    "role": "admin",
+    "email": "giridharsalana@gmail.com",
+    "createdAt": "2025-11-13T17:24:41.004Z"
+  }
+]
