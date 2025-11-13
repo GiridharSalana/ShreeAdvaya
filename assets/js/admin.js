@@ -116,7 +116,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
                 localStorage.setItem('admin_user', JSON.stringify(data.user));
                 const userDisplay = document.getElementById('currentUser');
                 if (userDisplay) {
-                    userDisplay.textContent = data.user.username;
+                    userDisplay.textContent = `👤 ${data.user.username}`;
                 }
             }
             showDashboard();
