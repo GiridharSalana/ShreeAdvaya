@@ -1167,7 +1167,7 @@ async function loadUsers() {
     if (!hasPermission('manage_users')) {
         const container = document.getElementById('usersList');
         if (container) {
-            container.innerHTML = '<p>Admin access required to view users.</p>';
+            container.innerHTML = '';
         }
         return;
     }
