@@ -1,14 +1,5 @@
 [
   {
-    "id": "1",
-    "name": "Traditional Silk Saree",
-    "category": "silk",
-    "price": "8999",
-    "image": "assets/images/product-1.webp",
-    "alt": "Traditional Red Silk Saree",
-    "createdAt": "2024-01-01T00:00:00.000Z"
-  },
-  {
     "id": "2",
     "name": "Handwoven Cotton Saree",
     "category": "cotton",
