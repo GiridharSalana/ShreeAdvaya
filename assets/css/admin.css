@@ -343,10 +343,32 @@ body {
     flex: 1 1 100%;
 }
 
-/* User Cards - Use same style as other cards */
+/* Disabled button styles */
+.disabled-btn,
+.btn:disabled,
 .item-card-actions .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.disabled-btn:hover,
+.btn:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Disabled tab styles */
+.disabled-tab,
+.nav-tab.disabled-tab {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+.disabled-tab:hover {
+    background: transparent !important;
+    color: inherit !important;
 }
 
 .item-card {

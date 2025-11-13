@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Apply role-based access control - hide elements instead of disabling
+// Apply role-based access control - gray out elements instead of hiding
 function applyRoleBasedAccess() {
     const role = getUserRole();
     const isAdmin = role === 'admin';
@@ -69,11 +69,13 @@ function applyRoleBasedAccess() {
     const usersTab = document.querySelector('a[data-tab="users"]');
     if (usersTab) {
         if (!isAdmin) {
+            usersTab.classList.add('disabled-tab');
             usersTab.style.opacity = '0.5';
             usersTab.style.pointerEvents = 'none';
             usersTab.style.cursor = 'not-allowed';
             usersTab.title = 'Admin access required';
         } else {
+            usersTab.classList.remove('disabled-tab');
             usersTab.style.opacity = '1';
             usersTab.style.pointerEvents = 'auto';
             usersTab.style.cursor = 'pointer';
@@ -81,32 +83,98 @@ function applyRoleBasedAccess() {
         }
     }
     
-    // Hide add buttons for viewers
-    const addButtons = document.querySelectorAll('.add-button-container');
+    // Gray out add buttons for non-editors (keep visible but disabled)
+    const addButtons = document.querySelectorAll('.add-button-container button');
     addButtons.forEach(btn => {
-        btn.style.display = canEdit ? 'block' : 'none';
+        if (canEdit) {
+            btn.classList.remove('disabled-btn');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.title = '';
+        } else {
+            btn.classList.add('disabled-btn');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.title = `${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed`;
+        }
     });
     
-    // Hide content form save button for viewers
+    // Gray out content form save button for non-editors
     const contentForm = document.getElementById('contentForm');
     if (contentForm) {
         const saveBtn = contentForm.querySelector('button[type="submit"]');
         if (saveBtn) {
-            saveBtn.style.display = canEdit ? 'block' : 'none';
+            if (canEdit) {
+                saveBtn.classList.remove('disabled-btn');
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
+                saveBtn.title = '';
+            } else {
+                saveBtn.classList.add('disabled-btn');
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.cursor = 'not-allowed';
+                saveBtn.title = `${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed`;
+            }
         }
     }
     
-    // Hide add feature button for viewers
+    // Gray out add feature button for non-editors
     const addFeatureBtn = document.querySelector('button[onclick="addFeatureField()"]');
     if (addFeatureBtn) {
-        addFeatureBtn.style.display = canEdit ? 'block' : 'none';
+        if (canEdit) {
+            addFeatureBtn.classList.remove('disabled-btn');
+            addFeatureBtn.disabled = false;
+            addFeatureBtn.style.opacity = '1';
+            addFeatureBtn.style.cursor = 'pointer';
+            addFeatureBtn.title = '';
+        } else {
+            addFeatureBtn.classList.add('disabled-btn');
+            addFeatureBtn.disabled = true;
+            addFeatureBtn.style.opacity = '0.5';
+            addFeatureBtn.style.cursor = 'not-allowed';
+            addFeatureBtn.title = `${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed`;
+        }
     }
     
-    // Hide save all changes button for viewers
+    // Gray out save all changes button for non-editors
     const saveAllBtn = document.getElementById('saveAllBtn');
     if (saveAllBtn) {
-        saveAllBtn.style.display = canEdit ? 'inline-flex' : 'none';
+        if (canEdit) {
+            saveAllBtn.classList.remove('disabled-btn');
+            saveAllBtn.disabled = false;
+            saveAllBtn.style.opacity = '1';
+            saveAllBtn.style.cursor = 'pointer';
+            saveAllBtn.title = '';
+        } else {
+            saveAllBtn.classList.add('disabled-btn');
+            saveAllBtn.disabled = true;
+            saveAllBtn.style.opacity = '0.5';
+            saveAllBtn.style.cursor = 'not-allowed';
+            saveAllBtn.title = `${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed`;
+        }
     }
+    
+    // Gray out all edit/delete buttons in cards
+    const editButtons = document.querySelectorAll('.item-card-actions .btn-primary, .item-card-actions .btn-danger');
+    editButtons.forEach(btn => {
+        if (canEdit) {
+            btn.classList.remove('disabled-btn');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.title = '';
+        } else {
+            btn.classList.add('disabled-btn');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.title = `${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed`;
+        }
+    });
 }
 
 async function checkAuth() {
@@ -349,6 +417,9 @@ async function loadProducts() {
             const card = createProductCard(product);
             container.appendChild(card);
         });
+        
+        // Apply role-based access after loading
+        applyRoleBasedAccess();
     } catch (error) {
         document.getElementById('productsList').innerHTML = 
             '<p class="error">Error loading products. Make sure API is configured.</p>';
@@ -393,16 +464,22 @@ function createProductCard(product) {
     card.className = 'item-card';
     const canEdit = hasPermission('edit');
     const productId = escapeHtml(String(product.id));
-    const actionsHTML = canEdit ? `
+    const disabledAttr = canEdit ? '' : 'disabled';
+    const disabledClass = canEdit ? '' : 'disabled-btn';
+    const disabledStyle = canEdit ? '' : 'style="opacity: 0.5; cursor: not-allowed;"';
+    const role = getUserRole();
+    const disabledTitle = canEdit ? '' : `title="${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed"`;
+    
+    const actionsHTML = `
         <div class="item-card-actions">
-            <button class="btn btn-primary" onclick="editProduct('${productId.replace(/'/g, "\\'")}')">
+            <button class="btn btn-primary ${disabledClass}" ${disabledAttr} ${disabledStyle} ${disabledTitle} onclick="${canEdit ? `editProduct('${productId.replace(/'/g, "\\'")}')` : 'return false;'}">
                 <i class="fas fa-edit"></i> Edit
             </button>
-            <button class="btn btn-danger" onclick="deleteProduct('${productId.replace(/'/g, "\\'")}')">
+            <button class="btn btn-danger ${disabledClass}" ${disabledAttr} ${disabledStyle} ${disabledTitle} onclick="${canEdit ? `deleteProduct('${productId.replace(/'/g, "\\'")}')` : 'return false;'}">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
-    ` : '';
+    `;
     
     const productImage = escapeHtml(product.image || '');
     const productAlt = escapeHtml(product.alt || product.name || '');
@@ -566,6 +643,9 @@ async function loadGallery() {
             const card = createGalleryCard(item);
             container.appendChild(card);
         });
+        
+        // Apply role-based access after loading
+        applyRoleBasedAccess();
     } catch (error) {
         document.getElementById('galleryList').innerHTML = 
             '<p class="error">Error loading gallery. Make sure API is configured.</p>';
@@ -593,13 +673,19 @@ function createGalleryCard(item) {
     card.className = 'item-card';
     const canEdit = hasPermission('edit');
     const itemId = escapeHtml(String(item.id));
-    const actionsHTML = canEdit ? `
+    const disabledAttr = canEdit ? '' : 'disabled';
+    const disabledClass = canEdit ? '' : 'disabled-btn';
+    const disabledStyle = canEdit ? '' : 'style="opacity: 0.5; cursor: not-allowed;"';
+    const role = getUserRole();
+    const disabledTitle = canEdit ? '' : `title="${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed"`;
+    
+    const actionsHTML = `
         <div class="item-card-actions">
-            <button class="btn btn-danger" onclick="deleteGalleryItem('${itemId.replace(/'/g, "\\'")}')">
+            <button class="btn btn-danger ${disabledClass}" ${disabledAttr} ${disabledStyle} ${disabledTitle} onclick="${canEdit ? `deleteGalleryItem('${itemId.replace(/'/g, "\\'")}')` : 'return false;'}">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
-    ` : '';
+    `;
     
     const itemImage = escapeHtml(item.image || '');
     const itemAlt = escapeHtml(item.alt || '');
@@ -724,6 +810,9 @@ async function loadHeroImages() {
             const card = createHeroCard(item);
             container.appendChild(card);
         });
+        
+        // Apply role-based access after loading
+        applyRoleBasedAccess();
     } catch (error) {
         document.getElementById('heroList').innerHTML = 
             '<p class="error">Error loading hero images. Make sure API is configured.</p>';
@@ -751,13 +840,19 @@ function createHeroCard(item) {
     card.className = 'item-card';
     const canEdit = hasPermission('edit');
     const itemId = escapeHtml(String(item.id));
-    const actionsHTML = canEdit ? `
+    const disabledAttr = canEdit ? '' : 'disabled';
+    const disabledClass = canEdit ? '' : 'disabled-btn';
+    const disabledStyle = canEdit ? '' : 'style="opacity: 0.5; cursor: not-allowed;"';
+    const role = getUserRole();
+    const disabledTitle = canEdit ? '' : `title="${role === 'viewer' ? 'Viewer' : 'Editor'} role: Editing not allowed"`;
+    
+    const actionsHTML = `
         <div class="item-card-actions">
-            <button class="btn btn-danger" onclick="deleteHeroImage('${itemId.replace(/'/g, "\\'")}')">
+            <button class="btn btn-danger ${disabledClass}" ${disabledAttr} ${disabledStyle} ${disabledTitle} onclick="${canEdit ? `deleteHeroImage('${itemId.replace(/'/g, "\\'")}')` : 'return false;'}">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
-    ` : '';
+    `;
     
     const itemImage = escapeHtml(item.image || '');
     
@@ -1209,8 +1304,14 @@ function createUserCard(user) {
     const userEmail = escapeHtml(user.email || `${user.username}@shreeadvaya.com`);
     const safeUsername = username.replace(/'/g, "\\'");
     const isDefault = user.isDefault ? ' <i class="fas fa-shield-alt" style="color: #d4af37; margin-left: 8px;" title="Default Admin User"></i>' : '';
-    const disabledAttr = user.isDefault ? 'disabled title="Cannot edit default admin user"' : '';
-    const deleteDisabledAttr = user.isDefault ? 'disabled title="Cannot delete default admin user"' : '';
+    const editDisabledClass = user.isDefault ? 'disabled-btn' : '';
+    const deleteDisabledClass = user.isDefault ? 'disabled-btn' : '';
+    const editDisabledAttr = user.isDefault ? 'disabled' : '';
+    const deleteDisabledAttr = user.isDefault ? 'disabled' : '';
+    const editDisabledStyle = user.isDefault ? 'style="opacity: 0.5; cursor: not-allowed;"' : '';
+    const deleteDisabledStyle = user.isDefault ? 'style="opacity: 0.5; cursor: not-allowed;"' : '';
+    const editTitle = user.isDefault ? 'title="Cannot edit default admin user"' : '';
+    const deleteTitle = user.isDefault ? 'title="Cannot delete default admin user"' : '';
     
     card.innerHTML = `
         <div class="item-card-body">
@@ -1222,10 +1323,10 @@ function createUserCard(user) {
                 <div>Email: ${userEmail}</div>
             </div>
             <div class="item-card-actions">
-                <button class="btn btn-primary" onclick="editUser('${safeUsername}')" ${disabledAttr}>
+                <button class="btn btn-primary ${editDisabledClass}" ${editDisabledAttr} ${editDisabledStyle} ${editTitle} onclick="${user.isDefault ? 'return false;' : `editUser('${safeUsername}')`}">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="btn btn-danger" onclick="deleteUser('${safeUsername}')" ${deleteDisabledAttr}>
+                <button class="btn btn-danger ${deleteDisabledClass}" ${deleteDisabledAttr} ${deleteDisabledStyle} ${deleteTitle} onclick="${user.isDefault ? 'return false;' : `deleteUser('${safeUsername}')`}">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
