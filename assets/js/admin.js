@@ -893,15 +893,15 @@ window.onclick = function(event) {
 
 // Image preview handlers
 document.getElementById('productImageUpload')?.addEventListener('change', (e) => {
-    handleImagePreview(e, 'productImagePreview', 'productImage');
+    handleImagePreview(e, 'productImagePreview', 'product');
 });
 
 document.getElementById('galleryImageUpload')?.addEventListener('change', (e) => {
-    handleImagePreview(e, 'galleryImagePreview', 'galleryImage');
+    handleImagePreview(e, 'galleryImagePreview', 'gallery');
 });
 
 document.getElementById('heroImageUpload')?.addEventListener('change', (e) => {
-    handleImagePreview(e, 'heroImagePreview', 'heroImage');
+    handleImagePreview(e, 'heroImagePreview', 'hero');
 });
 
 // Store uploaded image data
@@ -911,7 +911,7 @@ const uploadedImages = {
     hero: null
 };
 
-function handleImagePreview(event, previewId, inputId) {
+function handleImagePreview(event, previewId, type) {
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
@@ -920,10 +920,8 @@ function handleImagePreview(event, previewId, inputId) {
             preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 8px;">`;
             
             // Store the base64 data URL for use in form submission
-            const type = inputId.replace('Image', '').replace('product', 'product').replace('gallery', 'gallery').replace('hero', 'hero');
             if (type === 'product') {
                 uploadedImages.product = e.target.result;
-                // Make URL field optional when image is uploaded
                 document.getElementById('productImage').removeAttribute('required');
             } else if (type === 'gallery') {
                 uploadedImages.gallery = e.target.result;
