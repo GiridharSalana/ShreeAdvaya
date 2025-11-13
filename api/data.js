@@ -1,15 +1,82 @@
-// API route: /api/batch
-// Handles batch operations for all data types in a single commit
+// Consolidated API route: /api/data
+// Handles content and batch operations via query parameter ?action=content|batch
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
 
+    // Get action from query parameter
+    const { action } = req.query;
+
+    // Route to appropriate handler
+    if (action === 'content') {
+        return handleContent(req, res);
+    } else if (action === 'batch') {
+        return handleBatch(req, res);
+    } else {
+        // Default: content for GET, batch for POST
+        if (req.method === 'GET') {
+            return handleContent(req, res);
+        } else if (req.method === 'POST') {
+            return handleBatch(req, res);
+        }
+        return res.status(400).json({ error: 'Invalid action. Use ?action=content|batch' });
+    }
+}
+
+// Content handler
+async function handleContent(req, res) {
+    // Parse request body for PUT requests
+    let body = {};
+    if (req.method === 'PUT') {
+        try {
+            body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        } catch (e) {
+            return res.status(400).json({ error: 'Invalid JSON body' });
+        }
+    }
+
+    const { method } = req;
+    const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+    const GITHUB_OWNER = process.env.VERCEL_GIT_REPO_OWNER || process.env.GITHUB_OWNER || 'your-username';
+    const GITHUB_REPO = process.env.VERCEL_GIT_REPO_SLUG || process.env.GITHUB_REPO || 'ShreeAdvaya';
+    const DATA_FILE = 'data/content.json';
+
+    if (!GITHUB_TOKEN) {
+        return res.status(500).json({ error: 'GitHub token not configured' });
+    }
+
+    try {
+        if (method === 'GET') {
+            const content = await getFileFromGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, DATA_FILE);
+            return res.status(200).json(content);
+        }
+
+        if (method === 'PUT') {
+            const content = await getFileFromGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, DATA_FILE);
+            const updatedContent = {
+                ...content,
+                ...body,
+                updatedAt: new Date().toISOString()
+            };
+            await saveFileToGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, DATA_FILE, updatedContent);
+            return res.status(200).json(updatedContent);
+        }
+
+        return res.status(405).json({ error: 'Method not allowed' });
+    } catch (error) {
+        console.error('API Error:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+// Batch handler
+async function handleBatch(req, res) {
     // Verify authentication
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
@@ -42,7 +109,6 @@ export default async function handler(req, res) {
         if (body.products) {
             const products = await getFileFromGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, 'data/products.json');
             
-            // Apply updates
             if (body.products.update) {
                 body.products.update.forEach(update => {
                     const index = products.findIndex(p => p.id === update.id);
@@ -52,7 +118,6 @@ export default async function handler(req, res) {
                 });
             }
             
-            // Apply creates
             if (body.products.create) {
                 body.products.create.forEach(item => {
                     const newProduct = {
@@ -64,13 +129,11 @@ export default async function handler(req, res) {
                 });
             }
             
-            // Apply deletes
             if (body.products.delete && body.products.delete.length > 0) {
                 const deleteIds = body.products.delete.filter(id => !id.startsWith('temp_'));
                 const filtered = products.filter(p => !deleteIds.includes(p.id));
                 filesToUpdate['data/products.json'] = filtered;
             } else if (body.products.create || body.products.update) {
-                // Only update if there were creates or updates
                 filesToUpdate['data/products.json'] = products;
             }
             
@@ -196,6 +259,7 @@ export default async function handler(req, res) {
     }
 }
 
+// Helper functions
 async function getFileFromGitHub(token, owner, repo, path) {
     try {
         const response = await fetch(
@@ -210,7 +274,7 @@ async function getFileFromGitHub(token, owner, repo, path) {
         );
 
         if (response.status === 404) {
-            return [];
+            return path.includes('content.json') ? {} : [];
         }
 
         if (!response.ok) {
@@ -222,8 +286,58 @@ async function getFileFromGitHub(token, owner, repo, path) {
         return JSON.parse(content);
     } catch (error) {
         console.error('Error fetching from GitHub:', error);
-        return [];
+        return path.includes('content.json') ? {} : [];
     }
+}
+
+async function saveFileToGitHub(token, owner, repo, path, data) {
+    let sha = null;
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            }
+        );
+        if (response.ok) {
+            const fileData = await response.json();
+            sha = fileData.sha;
+        }
+    } catch (error) {
+        // File doesn't exist yet
+    }
+
+    const content = JSON.stringify(data, null, 2);
+    const encodedContent = Buffer.from(content).toString('base64');
+
+    const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+                'X-GitHub-Api-Version': '2022-11-28'
+            },
+            body: JSON.stringify({
+                message: `Update ${path} via admin panel - ${new Date().toISOString()}`,
+                content: encodedContent,
+                sha: sha
+            })
+        }
+    );
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`GitHub API error: ${error.message || response.statusText}`);
+    }
+
+    return await response.json();
 }
 
 async function getCurrentCommit(token, owner, repo) {
@@ -245,7 +359,6 @@ async function getCurrentCommit(token, owner, repo) {
     const ref = await response.json();
     const commitSha = ref.object.sha;
     
-    // Get commit to get tree SHA
     const commitResponse = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/git/commits/${commitSha}`,
         {
@@ -268,7 +381,6 @@ async function getCurrentCommit(token, owner, repo) {
 async function createTree(token, owner, repo, baseTreeSha, files) {
     const tree = [];
     
-    // Get base tree to preserve other files
     const baseTreeResponse = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/git/trees/${baseTreeSha}?recursive=1`,
         {
@@ -282,7 +394,6 @@ async function createTree(token, owner, repo, baseTreeSha, files) {
     
     if (baseTreeResponse.ok) {
         const baseTree = await baseTreeResponse.json();
-        // Keep all files except the ones we're updating
         const filesToUpdate = Object.keys(files);
         baseTree.tree.forEach(item => {
             if (!filesToUpdate.includes(item.path) && item.type === 'blob') {
@@ -296,12 +407,10 @@ async function createTree(token, owner, repo, baseTreeSha, files) {
         });
     }
     
-    // Add updated files
     for (const [path, data] of Object.entries(files)) {
         const content = JSON.stringify(data, null, 2);
         const encodedContent = Buffer.from(content).toString('base64');
         
-        // Create blob
         const blobResponse = await fetch(
             `https://api.github.com/repos/${owner}/${repo}/git/blobs`,
             {
@@ -332,7 +441,6 @@ async function createTree(token, owner, repo, baseTreeSha, files) {
         });
     }
     
-    // Create tree
     const treeResponse = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/git/trees`,
         {
@@ -407,56 +515,6 @@ async function updateReference(token, owner, repo, commitSha) {
         throw new Error(`Failed to update reference: ${error.message}`);
     }
     
-    return await response.json();
-}
-
-async function saveFileToGitHub(token, owner, repo, path, data, message) {
-    let sha = null;
-    try {
-        const response = await fetch(
-            `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'X-GitHub-Api-Version': '2022-11-28'
-                }
-            }
-        );
-        if (response.ok) {
-            const fileData = await response.json();
-            sha = fileData.sha;
-        }
-    } catch (error) {
-        // File doesn't exist yet
-    }
-
-    const content = JSON.stringify(data, null, 2);
-    const encodedContent = Buffer.from(content).toString('base64');
-
-    const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-        {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json',
-                'X-GitHub-Api-Version': '2022-11-28'
-            },
-            body: JSON.stringify({
-                message: message || `Update ${path} via admin panel - ${new Date().toISOString()}`,
-                content: encodedContent,
-                sha: sha
-            })
-        }
-    );
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`GitHub API error: ${error.message || response.statusText}`);
-    }
-
     return await response.json();
 }
 

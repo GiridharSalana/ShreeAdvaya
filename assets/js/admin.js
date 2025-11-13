@@ -751,7 +751,7 @@ async function deleteHeroImage(itemId) {
 // Content Management
 async function loadContent() {
     try {
-        const content = await apiCall('/content');
+        const content = await apiCall('/data?action=content');
         originalData.content = JSON.parse(JSON.stringify(content)); // Deep copy
         
         // Show pending changes if any, otherwise show original
@@ -1033,7 +1033,7 @@ async function saveAllChanges() {
         }
         
         // Send batch request
-        const result = await apiCall('/batch', 'POST', batchData);
+        const result = await apiCall('/data?action=batch', 'POST', batchData);
         
         // Clear pending changes
         pendingChanges.products = { create: [], update: [], delete: [] };
