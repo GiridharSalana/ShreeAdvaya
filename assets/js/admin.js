@@ -116,7 +116,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
                 localStorage.setItem('admin_user', JSON.stringify(data.user));
                 const userDisplay = document.getElementById('currentUser');
                 if (userDisplay) {
-                    userDisplay.textContent = `👤 ${data.user.username} (${data.user.role})`;
+                    userDisplay.textContent = data.user.username;
                 }
             }
             showDashboard();
@@ -1025,31 +1025,26 @@ async function loadUsers() {
 
 function createUserCard(user) {
     const card = document.createElement('div');
-    card.className = 'item-card user-card';
-    
-    const roleColor = user.role === 'admin' ? '#d4af37' : user.role === 'editor' ? '#4a90e2' : '#95a5a6';
+    card.className = 'item-card';
     
     card.innerHTML = `
-        <div class="user-card-header">
-            <div class="user-avatar" style="background: linear-gradient(135deg, ${roleColor}, ${roleColor}dd);">
-                ${user.username.charAt(0).toUpperCase()}
+        <div class="item-card-body">
+            <div class="item-card-title">
+                ${user.username}
+                ${user.isDefault ? ' <i class="fas fa-shield-alt" style="color: #d4af37; margin-left: 8px;" title="Default Admin User"></i>' : ''}
             </div>
-            <div class="user-info">
-                <div class="user-name">${user.username}</div>
-                <div class="user-email">${user.email || `${user.username}@shreeadvaya.com`}</div>
+            <div class="item-card-info">
+                <div>Role: ${user.role}</div>
+                <div>Email: ${user.email || `${user.username}@shreeadvaya.com`}</div>
             </div>
-            <span class="user-role-badge" style="background: ${roleColor};">
-                ${user.role}
-            </span>
-        </div>
-        ${user.isDefault ? '<div class="user-default-badge"><i class="fas fa-shield-alt"></i> Default Admin User</div>' : ''}
-        <div class="user-card-actions">
-            <button class="btn btn-primary" onclick="editUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot edit default admin user"' : ''}>
-                <i class="fas fa-edit"></i> Edit
-            </button>
-            <button class="btn btn-danger" onclick="deleteUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot delete default admin user"' : ''}>
-                <i class="fas fa-trash"></i> Delete
-            </button>
+            <div class="item-card-actions">
+                <button class="btn btn-primary" onclick="editUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot edit default admin user"' : ''}>
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-danger" onclick="deleteUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot delete default admin user"' : ''}>
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
         </div>
     `;
     return card;
