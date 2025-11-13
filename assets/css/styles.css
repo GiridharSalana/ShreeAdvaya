@@ -489,8 +489,10 @@ h6 {
     justify-content: center;
     align-items: flex-start;
     width: 100%;
+    margin: 0 auto;
 }
 
+.products-grid::before,
 .products-grid::after {
     content: '';
     flex: 1 1 300px;
@@ -504,9 +506,9 @@ h6 {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, opacity 0.6s ease;
     opacity: 1;
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: 300px;
+    flex: 0 0 300px;
+    width: 300px;
+    max-width: 100%;
 }
 
 .product-card:hover {
@@ -577,8 +579,10 @@ h6 {
     justify-content: center;
     align-items: flex-start;
     width: 100%;
+    margin: 0 auto;
 }
 
+.gallery-grid::before,
 .gallery-grid::after {
     content: '';
     flex: 1 1 300px;
@@ -589,7 +593,7 @@ h6 {
     position: relative;
     height: 300px;
     width: 300px;
-    flex: 0 0 auto;
+    flex: 0 0 300px;
     max-width: 100%;
     overflow: hidden;
     border-radius: 15px;
@@ -1134,30 +1138,34 @@ h6 {
         gap: 1.5rem;
     }
     
+    .products-grid::before,
     .products-grid::after {
-        flex: 1 1 100%;
-        max-width: 100%;
+        flex: 0 0 0;
+        max-width: 0;
+        display: none;
     }
     
     .product-card {
+        flex: 0 0 100%;
         width: 100%;
         max-width: 100%;
-        flex: 0 0 auto;
     }
 
     .gallery-grid {
         gap: 0.75rem;
     }
     
+    .gallery-grid::before,
     .gallery-grid::after {
-        flex: 1 1 100%;
-        max-width: 100%;
+        flex: 0 0 0;
+        max-width: 0;
+        display: none;
     }
     
     .gallery-item {
+        flex: 0 0 100%;
         width: 100%;
         max-width: 100%;
-        flex: 0 0 auto;
         height: 250px;
     }
 
