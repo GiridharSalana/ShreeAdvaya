@@ -39,8 +39,8 @@ async function checkAuth() {
     }
 
     try {
-        // Try multi-user verify first, fallback to single password verify
-        let response = await fetch(`${API_BASE}/auth/verify-multi`, {
+        // Use consolidated verify endpoint
+        const response = await fetch(`${API_BASE}/auth/verify`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -48,18 +48,6 @@ async function checkAuth() {
             },
             body: JSON.stringify({ token })
         });
-
-        // If multi-user verify fails, try single password verify (backward compatibility)
-        if (!response.ok) {
-            response = await fetch(`${API_BASE}/auth/verify`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ token })
-            });
-        }
 
         if (response.ok) {
             const data = await response.json();
@@ -109,31 +97,15 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     errorMsg.classList.remove('show');
 
     try {
-        // Try multi-user login first, fallback to single password
-        let response;
-        let loginData = {};
-        
-        if (username) {
-            // Multi-user login
-            loginData = { username, password };
-            response = await fetch(`${API_BASE}/auth/login-multi`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(loginData)
-            });
-        } else {
-            // Fallback: single password (backward compatibility)
-            loginData = { password };
-            response = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(loginData)
-            });
-        }
+        // Use consolidated login endpoint (handles both single password and multi-user)
+        const loginData = username ? { username, password } : { password };
+        const response = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginData)
+        });
 
         const data = await response.json();
 
@@ -1030,7 +1002,7 @@ let usersData = [];
 
 async function loadUsers() {
     try {
-        const response = await apiCall('/auth/users-list');
+        const response = await apiCall('/auth/users-management');
         usersData = response.users || [];
         
         const container = document.getElementById('usersList');
@@ -1169,7 +1141,7 @@ document.getElementById('userForm')?.addEventListener('submit', async (e) => {
                 updateData.password = password;
             }
             
-            await apiCall('/auth/users-update', 'PUT', updateData);
+            await apiCall('/auth/users-management', 'PUT', updateData);
             showNotification('User updated successfully!', 'success');
         } else {
             // Create new user
@@ -1208,7 +1180,7 @@ async function deleteUser(username) {
     }
 
     try {
-        await apiCall('/auth/users-delete', 'DELETE', { username });
+        await apiCall('/auth/users-management', 'DELETE', { username });
         showNotification('User deleted successfully!', 'success');
         await loadUsers();
     } catch (error) {
