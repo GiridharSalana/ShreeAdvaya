@@ -228,6 +228,12 @@ document.getElementById('logoutBtn')?.addEventListener('click', () => {
 document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
         e.preventDefault();
+        
+        // Check if tab is disabled (grayed out)
+        if (tab.style.pointerEvents === 'none') {
+            return; // Don't allow navigation to disabled tabs
+        }
+        
         const targetTab = tab.getAttribute('data-tab');
         
         // Update active tab
@@ -239,6 +245,11 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
             content.classList.remove('active');
         });
         document.getElementById(`${targetTab}Tab`).classList.add('active');
+        
+        // Load data for the active tab if needed
+        if (targetTab === 'users') {
+            loadUsers();
+        }
     });
 });
 
