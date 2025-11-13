@@ -56,7 +56,7 @@ async function checkAuth() {
                 localStorage.setItem('admin_user', JSON.stringify(data.user));
                 const userDisplay = document.getElementById('currentUser');
                 if (userDisplay) {
-                    userDisplay.textContent = `👤 ${data.user.username} (${data.user.role})`;
+                    userDisplay.textContent = `👤 ${data.user.username}`;
                 }
             }
             return true;
@@ -341,6 +341,8 @@ function openProductModal(productId = null) {
 
     form.reset();
     document.getElementById('productImagePreview').innerHTML = '';
+    uploadedImages.product = null;
+    document.getElementById('productImage').removeAttribute('required');
 
     if (productId) {
         title.textContent = 'Edit Product';
@@ -379,13 +381,25 @@ document.getElementById('productForm')?.addEventListener('submit', async (e) => 
     e.preventDefault();
     
     const productId = document.getElementById('productId').value;
+    const imageUrl = document.getElementById('productImage').value;
+    const uploadedImage = uploadedImages.product;
+    
+    // Use uploaded image if available, otherwise use URL
+    if (!imageUrl && !uploadedImage) {
+        showNotification('Please provide either an image URL or upload an image', 'error');
+        return;
+    }
+    
     const productData = {
         name: document.getElementById('productName').value,
         category: document.getElementById('productCategory').value,
         price: document.getElementById('productPrice').value,
-        image: document.getElementById('productImage').value,
+        image: uploadedImage || imageUrl,
         alt: document.getElementById('productAlt').value
     };
+    
+    // Clear uploaded image after use
+    uploadedImages.product = null;
 
     try {
         if (productId) {
@@ -508,6 +522,8 @@ function openGalleryModal(itemId = null) {
 
     form.reset();
     document.getElementById('galleryImagePreview').innerHTML = '';
+    uploadedImages.gallery = null;
+    document.getElementById('galleryImage').removeAttribute('required');
 
     if (itemId) {
         title.textContent = 'Edit Gallery Image';
@@ -524,10 +540,22 @@ document.getElementById('galleryForm')?.addEventListener('submit', async (e) => 
     e.preventDefault();
     
     const itemId = document.getElementById('galleryId').value;
+    const imageUrl = document.getElementById('galleryImage').value;
+    const uploadedImage = uploadedImages.gallery;
+    
+    // Use uploaded image if available, otherwise use URL
+    if (!imageUrl && !uploadedImage) {
+        showNotification('Please provide either an image URL or upload an image', 'error');
+        return;
+    }
+    
     const galleryData = {
-        image: document.getElementById('galleryImage').value,
+        image: uploadedImage || imageUrl,
         alt: document.getElementById('galleryAlt').value
     };
+    
+    // Clear uploaded image after use
+    uploadedImages.gallery = null;
 
     try {
         if (itemId) {
@@ -643,6 +671,8 @@ function openHeroModal(itemId = null) {
 
     form.reset();
     document.getElementById('heroImagePreview').innerHTML = '';
+    uploadedImages.hero = null;
+    document.getElementById('heroImage').removeAttribute('required');
 
     if (itemId) {
         title.textContent = 'Edit Hero Image';
@@ -659,9 +689,21 @@ document.getElementById('heroForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const itemId = document.getElementById('heroId').value;
+    const imageUrl = document.getElementById('heroImage').value;
+    const uploadedImage = uploadedImages.hero;
+    
+    // Use uploaded image if available, otherwise use URL
+    if (!imageUrl && !uploadedImage) {
+        showNotification('Please provide either an image URL or upload an image', 'error');
+        return;
+    }
+    
     const heroData = {
-        image: document.getElementById('heroImage').value
+        image: uploadedImage || imageUrl
     };
+    
+    // Clear uploaded image after use
+    uploadedImages.hero = null;
 
     try {
         if (itemId) {
@@ -862,15 +904,34 @@ document.getElementById('heroImageUpload')?.addEventListener('change', (e) => {
     handleImagePreview(e, 'heroImagePreview', 'heroImage');
 });
 
+// Store uploaded image data
+const uploadedImages = {
+    product: null,
+    gallery: null,
+    hero: null
+};
+
 function handleImagePreview(event, previewId, inputId) {
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
             const preview = document.getElementById(previewId);
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-            // Note: For actual upload, you'd need to convert to base64 or upload to a service
-            // For now, we'll just show preview
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 8px;">`;
+            
+            // Store the base64 data URL for use in form submission
+            const type = inputId.replace('Image', '').replace('product', 'product').replace('gallery', 'gallery').replace('hero', 'hero');
+            if (type === 'product') {
+                uploadedImages.product = e.target.result;
+                // Make URL field optional when image is uploaded
+                document.getElementById('productImage').removeAttribute('required');
+            } else if (type === 'gallery') {
+                uploadedImages.gallery = e.target.result;
+                document.getElementById('galleryImage').removeAttribute('required');
+            } else if (type === 'hero') {
+                uploadedImages.hero = e.target.result;
+                document.getElementById('heroImage').removeAttribute('required');
+            }
         };
         reader.readAsDataURL(file);
     }
