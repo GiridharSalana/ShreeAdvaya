@@ -63,25 +63,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 function applyRoleBasedAccess() {
     const role = getUserRole();
     const isAdmin = role === 'admin';
-    const isEditor = role === 'editor';
-    const isViewer = role === 'viewer';
+    const canEdit = hasPermission('edit');
     
-    // Hide User Management tab for non-admins
+    // Gray out User Management tab for non-admins (keep visible but disabled)
     const usersTab = document.querySelector('a[data-tab="users"]');
     if (usersTab) {
-        usersTab.style.display = isAdmin ? 'flex' : 'none';
+        if (!isAdmin) {
+            usersTab.style.opacity = '0.5';
+            usersTab.style.pointerEvents = 'none';
+            usersTab.style.cursor = 'not-allowed';
+            usersTab.title = 'Admin access required';
+        } else {
+            usersTab.style.opacity = '1';
+            usersTab.style.pointerEvents = 'auto';
+            usersTab.style.cursor = 'pointer';
+            usersTab.title = '';
+        }
     }
     
     // Hide add buttons for viewers
     const addButtons = document.querySelectorAll('.add-button-container');
     addButtons.forEach(btn => {
-        if (isViewer) {
-            btn.style.display = 'none';
-        }
+        btn.style.display = canEdit ? 'block' : 'none';
     });
     
-    // Hide edit/delete buttons in cards for viewers
-    // This will be handled when cards are created
+    // Hide content form save button for viewers
+    const contentForm = document.getElementById('contentForm');
+    if (contentForm) {
+        const saveBtn = contentForm.querySelector('button[type="submit"]');
+        if (saveBtn) {
+            saveBtn.style.display = canEdit ? 'block' : 'none';
+        }
+    }
+    
+    // Hide add feature button for viewers
+    const addFeatureBtn = document.querySelector('button[onclick="addFeatureField()"]');
+    if (addFeatureBtn) {
+        addFeatureBtn.style.display = canEdit ? 'block' : 'none';
+    }
+    
+    // Hide save all changes button for viewers
+    const saveAllBtn = document.getElementById('saveAllBtn');
+    if (saveAllBtn) {
+        saveAllBtn.style.display = canEdit ? 'inline-flex' : 'none';
+    }
 }
 
 async function checkAuth() {
@@ -712,15 +737,20 @@ function getDisplayHeroes() {
 function createHeroCard(item) {
     const card = document.createElement('div');
     card.className = 'item-card';
+    const canEdit = hasPermission('edit');
+    const actionsHTML = canEdit ? `
+        <div class="item-card-actions">
+            <button class="btn btn-danger" onclick="deleteHeroImage('${item.id}')">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    ` : '';
+    
     card.innerHTML = `
         <img src="${item.image}" alt="Hero Image" onerror="this.src='assets/images/hero-1.webp'">
         <div class="item-card-body">
             <div class="item-card-title">Hero Image ${item.id}</div>
-            <div class="item-card-actions">
-                <button class="btn btn-danger" onclick="deleteHeroImage('${item.id}')">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
+            ${actionsHTML}
         </div>
     `;
     return card;
