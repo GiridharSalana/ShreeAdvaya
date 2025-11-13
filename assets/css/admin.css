@@ -328,12 +328,19 @@ body {
 
 @media (min-width: 768px) {
     .items-grid::after {
+        flex: 1 1 300px;
         max-width: 300px;
     }
     
     .items-grid .item-card {
         width: 300px;
     }
+}
+
+/* Ensure proper centering when there are few items */
+.items-grid:empty::after,
+.items-grid:has(.item-card:only-child)::after {
+    flex: 1 1 100%;
 }
 
 /* User Cards - Use same style as other cards */
