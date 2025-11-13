@@ -97,9 +97,9 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     errorMsg.classList.remove('show');
 
     try {
-        // Use consolidated login endpoint (handles both single password and multi-user)
+        // Use consolidated auth endpoint with login action
         const loginData = username ? { username, password } : { password };
-        const response = await fetch(`${API_BASE}/auth/login`, {
+        const response = await fetch(`${API_BASE}/auth?action=login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1002,7 +1002,7 @@ let usersData = [];
 
 async function loadUsers() {
     try {
-        const response = await apiCall('/auth/users-management');
+        const response = await apiCall('/auth?action=users');
         usersData = response.users || [];
         
         const container = document.getElementById('usersList');
@@ -1138,11 +1138,11 @@ document.getElementById('userForm')?.addEventListener('submit', async (e) => {
                 updateData.password = password;
             }
             
-            await apiCall('/auth/users-management', 'PUT', updateData);
+            await apiCall('/auth?action=users', 'PUT', updateData);
             showNotification('User updated successfully!', 'success');
         } else {
             // Create new user
-            await apiCall('/auth/register', 'POST', {
+            await apiCall('/auth?action=register', 'POST', {
                 username,
                 password,
                 email: email || undefined,
@@ -1177,7 +1177,7 @@ async function deleteUser(username) {
     }
 
     try {
-        await apiCall('/auth/users-management', 'DELETE', { username });
+        await apiCall('/auth?action=users', 'DELETE', { username });
         showNotification('User deleted successfully!', 'success');
         await loadUsers();
     } catch (error) {
