@@ -20,17 +20,69 @@ const originalData = {
     content: {}
 };
 
+// Get current user role
+function getUserRole() {
+    const userStr = localStorage.getItem('admin_user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            return user.role || 'viewer';
+        } catch (e) {
+            return 'viewer';
+        }
+    }
+    return 'viewer';
+}
+
+// Check if user has permission
+function hasPermission(action) {
+    const role = getUserRole();
+    if (role === 'admin') return true;
+    if (role === 'editor') {
+        // Editors can edit content but not manage users
+        return action !== 'manage_users';
+    }
+    // Viewers can only view
+    return false;
+}
+
 // Check authentication on load
 document.addEventListener('DOMContentLoaded', async () => {
     const isAuthenticated = await checkAuth();
     if (isAuthenticated) {
         showDashboard();
         setupEventListeners();
+        applyRoleBasedAccess();
         loadData();
     } else {
         showLogin();
     }
 });
+
+// Apply role-based access control - hide elements instead of disabling
+function applyRoleBasedAccess() {
+    const role = getUserRole();
+    const isAdmin = role === 'admin';
+    const isEditor = role === 'editor';
+    const isViewer = role === 'viewer';
+    
+    // Hide User Management tab for non-admins
+    const usersTab = document.querySelector('a[data-tab="users"]');
+    if (usersTab) {
+        usersTab.style.display = isAdmin ? 'flex' : 'none';
+    }
+    
+    // Hide add buttons for viewers
+    const addButtons = document.querySelectorAll('.add-button-container');
+    addButtons.forEach(btn => {
+        if (isViewer) {
+            btn.style.display = 'none';
+        }
+    });
+    
+    // Hide edit/delete buttons in cards for viewers
+    // This will be handled when cards are created
+}
 
 async function checkAuth() {
     const token = localStorage.getItem(STORAGE_KEY);
@@ -313,6 +365,18 @@ function getDisplayProducts() {
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'item-card';
+    const canEdit = hasPermission('edit');
+    const actionsHTML = canEdit ? `
+        <div class="item-card-actions">
+            <button class="btn btn-primary" onclick="editProduct('${product.id}')">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    ` : '';
+    
     card.innerHTML = `
         <img src="${product.image}" alt="${product.alt || product.name}" onerror="this.src='assets/images/product-1.webp'">
         <div class="item-card-body">
@@ -321,14 +385,7 @@ function createProductCard(product) {
                 <div>Category: ${product.category}</div>
                 <div>Price: ₹${product.price}</div>
             </div>
-            <div class="item-card-actions">
-                <button class="btn btn-primary" onclick="editProduct('${product.id}')">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
+            ${actionsHTML}
         </div>
     `;
     return card;
@@ -501,15 +558,20 @@ function getDisplayGallery() {
 function createGalleryCard(item) {
     const card = document.createElement('div');
     card.className = 'item-card';
+    const canEdit = hasPermission('edit');
+    const actionsHTML = canEdit ? `
+        <div class="item-card-actions">
+            <button class="btn btn-danger" onclick="deleteGalleryItem('${item.id}')">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    ` : '';
+    
     card.innerHTML = `
         <img src="${item.image}" alt="${item.alt}" onerror="this.src='assets/images/new-1.webp'">
         <div class="item-card-body">
             <div class="item-card-title">${item.alt}</div>
-            <div class="item-card-actions">
-                <button class="btn btn-danger" onclick="deleteGalleryItem('${item.id}')">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
+            ${actionsHTML}
         </div>
     `;
     return card;

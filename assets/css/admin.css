@@ -305,35 +305,26 @@ body {
 
 /* Items Grid */
 .items-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 280px));
     justify-content: center;
-    align-items: flex-start;
-    align-content: flex-start;
     gap: 20px;
     padding: 20px 0;
     width: 100%;
 }
 
-.items-grid::after {
-    content: '';
-    flex: 1 1 280px;
-    max-width: 300px;
-}
-
 .items-grid .item-card {
-    flex: 0 0 auto;
     width: 280px;
     max-width: 100%;
 }
 
 @media (min-width: 768px) {
-    .items-grid .item-card {
-        width: 300px;
+    .items-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 300px));
     }
     
-    .items-grid::after {
-        max-width: 300px;
+    .items-grid .item-card {
+        width: 300px;
     }
 }
 
