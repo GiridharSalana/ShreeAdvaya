@@ -306,9 +306,105 @@ body {
 /* Items Grid */
 .items-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 280px));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     justify-content: center;
+    padding: 20px 0;
+}
+
+@media (min-width: 768px) {
+    .items-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+}
+
+/* User Cards Specific Styles */
+.user-card {
+    min-width: 320px;
+    max-width: 400px;
+}
+
+.user-card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c1810;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.user-email {
+    font-size: 0.9rem;
+    color: #666;
+    word-break: break-word;
+}
+
+.user-role-badge {
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.user-default-badge {
+    color: #d4af37;
+    font-size: 0.85rem;
+    padding: 8px 20px;
+    background: #fff9e6;
+    border-left: 3px solid #d4af37;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-default-badge i {
+    font-size: 0.9rem;
+}
+
+.user-card-actions {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+}
+
+.user-card-actions .btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+}
+
+.user-card-actions .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .item-card {

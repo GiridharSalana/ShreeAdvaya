@@ -39,8 +39,8 @@ async function checkAuth() {
     }
 
     try {
-        // Use consolidated verify endpoint
-        const response = await fetch(`${API_BASE}/auth/verify`, {
+        // Use consolidated auth endpoint with verify action
+        const response = await fetch(`${API_BASE}/auth?action=verify`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1025,34 +1025,31 @@ async function loadUsers() {
 
 function createUserCard(user) {
     const card = document.createElement('div');
-    card.className = 'item-card';
+    card.className = 'item-card user-card';
     
-    const roleBadge = user.role === 'admin' ? 'badge-admin' : user.role === 'editor' ? 'badge-editor' : 'badge-viewer';
     const roleColor = user.role === 'admin' ? '#d4af37' : user.role === 'editor' ? '#4a90e2' : '#95a5a6';
     
     card.innerHTML = `
-        <div class="item-card-body" style="padding: 20px;">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, ${roleColor}, ${roleColor}dd); display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; font-weight: bold;">
-                    ${user.username.charAt(0).toUpperCase()}
-                </div>
-                <div style="flex: 1;">
-                    <div class="item-card-title" style="margin-bottom: 5px;">${user.username}</div>
-                    <div style="font-size: 0.9rem; color: #666;">${user.email || `${user.username}@shreeadvaya.com`}</div>
-                </div>
-                <span style="background: ${roleColor}; color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 500; text-transform: capitalize;">
-                    ${user.role}
-                </span>
+        <div class="user-card-header">
+            <div class="user-avatar" style="background: linear-gradient(135deg, ${roleColor}, ${roleColor}dd);">
+                ${user.username.charAt(0).toUpperCase()}
             </div>
-            ${user.isDefault ? '<div style="color: #d4af37; font-size: 0.85rem; margin-bottom: 10px;"><i class="fas fa-shield-alt"></i> Default Admin User</div>' : ''}
-            <div class="item-card-actions">
-                <button class="btn btn-primary" onclick="editUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot edit default admin user"' : ''}>
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-danger" onclick="deleteUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot delete default admin user"' : ''}>
-                    <i class="fas fa-trash"></i> Delete
-                </button>
+            <div class="user-info">
+                <div class="user-name">${user.username}</div>
+                <div class="user-email">${user.email || `${user.username}@shreeadvaya.com`}</div>
             </div>
+            <span class="user-role-badge" style="background: ${roleColor};">
+                ${user.role}
+            </span>
+        </div>
+        ${user.isDefault ? '<div class="user-default-badge"><i class="fas fa-shield-alt"></i> Default Admin User</div>' : ''}
+        <div class="user-card-actions">
+            <button class="btn btn-primary" onclick="editUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot edit default admin user"' : ''}>
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-danger" onclick="deleteUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot delete default admin user"' : ''}>
+                <i class="fas fa-trash"></i> Delete
+            </button>
         </div>
     `;
     return card;
