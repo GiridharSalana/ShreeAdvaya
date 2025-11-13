@@ -2,6 +2,148 @@
 const API_BASE = '/api';
 const STORAGE_KEY = 'admin_token';
 
+// Registration form handler
+document.getElementById('showRegisterLink')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    // Check if user is logged in
+    const token = localStorage.getItem(STORAGE_KEY);
+    const registerNote = document.getElementById('registerNote');
+    
+    if (token) {
+        // User is logged in - check if they're admin
+        try {
+            const response = await fetch(`${API_BASE}/auth/verify-multi`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ token })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.user && data.user.role === 'admin') {
+                    registerNote.textContent = 'Registering new user as admin';
+                } else {
+                    registerNote.textContent = 'Admin access required to register new users';
+                }
+            } else {
+                registerNote.textContent = 'Admin access required to register new users';
+            }
+        } catch (error) {
+            registerNote.textContent = 'Admin access required to register new users';
+        }
+    } else {
+        // No token - might be first user registration
+        registerNote.textContent = 'Register first admin user (no login required)';
+    }
+    
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('registerBox').style.display = 'block';
+    document.getElementById('registerError').classList.remove('show');
+    document.getElementById('registerSuccess').style.display = 'none';
+});
+
+document.getElementById('cancelRegisterBtn')?.addEventListener('click', () => {
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('registerBox').style.display = 'none';
+    document.getElementById('registerForm').reset();
+    document.getElementById('registerError').classList.remove('show');
+    document.getElementById('registerSuccess').style.display = 'none';
+});
+
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+    const email = document.getElementById('regEmail').value.trim();
+    const role = document.getElementById('regRole').value;
+    
+    const errorMsg = document.getElementById('registerError');
+    const successMsg = document.getElementById('registerSuccess');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    // Reset messages
+    errorMsg.classList.remove('show');
+    successMsg.style.display = 'none';
+    
+    // Validation
+    if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    if (password.length < 6) {
+        errorMsg.textContent = 'Password must be at least 6 characters';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        errorMsg.textContent = 'Username must be 3-20 characters and contain only letters, numbers, and underscores';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    // Disable button during registration
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+    
+    try {
+        const token = localStorage.getItem(STORAGE_KEY);
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add authorization header if token exists (not required for first user)
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                username,
+                password,
+                email: email || undefined,
+                role
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            const isFirstUser = !token;
+            successMsg.textContent = `User "${data.user.username}" registered successfully!${isFirstUser ? ' You can now login.' : ''}`;
+            successMsg.style.display = 'block';
+            document.getElementById('registerForm').reset();
+            
+            // Auto-hide success message and return to login after 3 seconds
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+                document.getElementById('loginBox').style.display = 'block';
+                document.getElementById('registerBox').style.display = 'none';
+            }, 3000);
+        } else {
+            errorMsg.textContent = data.error || 'Registration failed';
+            errorMsg.classList.add('show');
+        }
+    } catch (error) {
+        errorMsg.textContent = error.message || 'Registration failed. Please try again.';
+        errorMsg.classList.add('show');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+});
+
 // Batch Save System - Track all changes locally
 const pendingChanges = {
     products: { create: [], update: [], delete: [] },
@@ -37,7 +179,8 @@ async function checkAuth() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/auth/verify`, {
+        // Try multi-user verify first, fallback to single password verify
+        let response = await fetch(`${API_BASE}/auth/verify-multi`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -46,15 +189,38 @@ async function checkAuth() {
             body: JSON.stringify({ token })
         });
 
+        // If multi-user verify fails, try single password verify (backward compatibility)
+        if (!response.ok) {
+            response = await fetch(`${API_BASE}/auth/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ token })
+            });
+        }
+
         if (response.ok) {
+            const data = await response.json();
+            // Update user display if user info available
+            if (data.user) {
+                localStorage.setItem('admin_user', JSON.stringify(data.user));
+                const userDisplay = document.getElementById('currentUser');
+                if (userDisplay) {
+                    userDisplay.textContent = `👤 ${data.user.username} (${data.user.role})`;
+                }
+            }
             return true;
         } else {
             localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem('admin_user');
             return false;
         }
     } catch (error) {
         console.error('Auth check error:', error);
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('admin_user');
         return false;
     }
 }
@@ -69,9 +235,10 @@ function showDashboard() {
     document.getElementById('adminDashboard').style.display = 'block';
 }
 
-// Login form handler
+// Login form handler - supports both single password and multi-user
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const username = document.getElementById('username')?.value || '';
     const password = document.getElementById('password').value;
     const errorMsg = document.getElementById('loginError');
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -82,24 +249,50 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     errorMsg.classList.remove('show');
 
     try {
-        const response = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ password })
-        });
+        // Try multi-user login first, fallback to single password
+        let response;
+        let loginData = {};
+        
+        if (username) {
+            // Multi-user login
+            loginData = { username, password };
+            response = await fetch(`${API_BASE}/auth/login-multi`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loginData)
+            });
+        } else {
+            // Fallback: single password (backward compatibility)
+            loginData = { password };
+            response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loginData)
+            });
+        }
 
         const data = await response.json();
 
         if (response.ok && data.success) {
             localStorage.setItem(STORAGE_KEY, data.token);
+            // Store user info if available
+            if (data.user) {
+                localStorage.setItem('admin_user', JSON.stringify(data.user));
+                const userDisplay = document.getElementById('currentUser');
+                if (userDisplay) {
+                    userDisplay.textContent = `👤 ${data.user.username} (${data.user.role})`;
+                }
+            }
             showDashboard();
             setupEventListeners();
             loadData();
             errorMsg.classList.remove('show');
         } else {
-            errorMsg.textContent = data.error || 'Invalid password';
+            errorMsg.textContent = data.error || 'Invalid credentials';
             errorMsg.classList.add('show');
         }
     } catch (error) {
@@ -114,8 +307,12 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 // Logout
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('admin_user');
     showLogin();
-    document.getElementById('password').value = '';
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    if (usernameInput) usernameInput.value = '';
+    if (passwordInput) passwordInput.value = '';
 });
 
 // Tab navigation

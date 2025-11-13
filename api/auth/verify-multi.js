@@ -1,4 +1,4 @@
-// API route: /api/auth/verify
+// API route: /api/auth/verify-multi
 // Verifies JWT authentication token using ADMIN_PASSWORD as secret
 
 import { verifyToken } from './jwt.js';

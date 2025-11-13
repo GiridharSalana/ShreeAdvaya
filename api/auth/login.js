@@ -1,5 +1,9 @@
 // API route: /api/auth/login
-// Handles admin authentication
+// Handles admin authentication with JWT tokens
+// Uses ADMIN_PASSWORD as JWT secret and for password decryption
+
+import { authenticateUser } from './users.js';
+import { generateToken } from './jwt.js';
 
 export default async function handler(req, res) {
     // Security headers
@@ -37,22 +41,43 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid JSON body' });
     }
 
-    const { password } = body;
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-    if (!ADMIN_PASSWORD) {
-        return res.status(500).json({ error: 'Admin password not configured. Please set ADMIN_PASSWORD in Vercel environment variables.' });
-    }
-
+    const { username, password } = body;
+    
     // Validate password format (prevent empty/null)
     if (!password || typeof password !== 'string') {
         return res.status(400).json({ error: 'Password required' });
     }
 
-    // Simple password comparison (in production, use bcrypt for hashing)
+    // If username provided, use multi-user authentication with encrypted passwords
+    if (username && typeof username === 'string') {
+        const user = await authenticateUser(username, password);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        // Generate JWT token using ADMIN_PASSWORD as secret
+        const token = generateToken(user);
+        return res.status(200).json({ 
+            success: true, 
+            token: token,
+            user: {
+                username: user.username,
+                role: user.role
+            },
+            expiresIn: 3600 // 1 hour
+        });
+    }
+
+    // Fallback: Single password authentication (backward compatibility)
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    if (!ADMIN_PASSWORD) {
+        return res.status(500).json({ error: 'Admin password not configured. Please set ADMIN_PASSWORD in Vercel environment variables or use username/password.' });
+    }
+
+    // Simple password comparison (backward compatibility)
     if (password === ADMIN_PASSWORD) {
-        // Generate a more secure token
-        const token = generateSecureToken();
+        // Generate JWT token
+        const token = generateToken({ username: 'admin', role: 'admin' });
         return res.status(200).json({ 
             success: true, 
             token: token,
@@ -61,24 +86,5 @@ export default async function handler(req, res) {
     } else {
         // Don't reveal whether user exists or not
         return res.status(401).json({ error: 'Invalid credentials' });
-    }
-}
-
-// More secure token generator
-function generateSecureToken() {
-    // Use crypto if available (Node.js), otherwise fallback
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        const randomString = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-        return randomString + Date.now().toString(36);
-    } else {
-        // Fallback for environments without crypto
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let token = '';
-        for (let i = 0; i < 64; i++) {
-            token += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return token + Date.now().toString(36);
     }
 }
