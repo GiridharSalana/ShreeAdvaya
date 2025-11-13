@@ -1,10 +1,27 @@
 // Consolidated API route: /api/data
 // Handles content and batch operations via query parameter ?action=content|batch
 
+import { verifyToken } from './auth/jwt.js';
+
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // CORS - restrict to your domain only
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://shreeadvaya.vercel.app';
+    const origin = req.headers.origin;
+    
+    if (origin && (origin === allowedOrigin || origin.includes('localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -70,8 +87,7 @@ async function handleContent(req, res) {
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error('API Error:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message || 'Internal server error' });
     }
 }
 
@@ -81,8 +97,13 @@ async function handleBatch(req, res) {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
     
-    if (!token || !(await verifyToken(token))) {
+    if (!token) {
         return res.status(401).json({ error: 'Unauthorized. Please login.' });
+    }
+
+    const verification = verifyToken(token);
+    if (!verification.valid) {
+        return res.status(401).json({ error: 'Unauthorized. Invalid or expired token.' });
     }
 
     // Parse request body
@@ -129,11 +150,19 @@ async function handleBatch(req, res) {
                 });
             }
             
+            // Apply deletions
             if (body.products.delete && body.products.delete.length > 0) {
                 const deleteIds = body.products.delete.filter(id => !id.startsWith('temp_'));
-                const filtered = products.filter(p => !deleteIds.includes(p.id));
-                filesToUpdate['data/products.json'] = filtered;
-            } else if (body.products.create || body.products.update) {
+                products = products.filter(p => !deleteIds.includes(p.id));
+            }
+            
+            // Update file if there are any changes
+            const hasChanges = 
+                (body.products.create && body.products.create.length > 0) ||
+                (body.products.update && body.products.update.length > 0) ||
+                (body.products.delete && body.products.delete.length > 0);
+            
+            if (hasChanges) {
                 filesToUpdate['data/products.json'] = products;
             }
             
@@ -166,11 +195,19 @@ async function handleBatch(req, res) {
                 });
             }
             
+            // Apply deletions
             if (body.gallery.delete && body.gallery.delete.length > 0) {
                 const deleteIds = body.gallery.delete.filter(id => !id.startsWith('temp_'));
-                const filtered = gallery.filter(g => !deleteIds.includes(g.id));
-                filesToUpdate['data/gallery.json'] = filtered;
-            } else if (body.gallery.create || body.gallery.update) {
+                gallery = gallery.filter(g => !deleteIds.includes(g.id));
+            }
+            
+            // Update file if there are any changes
+            const hasChanges = 
+                (body.gallery.create && body.gallery.create.length > 0) ||
+                (body.gallery.update && body.gallery.update.length > 0) ||
+                (body.gallery.delete && body.gallery.delete.length > 0);
+            
+            if (hasChanges) {
                 filesToUpdate['data/gallery.json'] = gallery;
             }
             
@@ -204,11 +241,19 @@ async function handleBatch(req, res) {
                 });
             }
             
+            // Apply deletions
             if (body.hero.delete && body.hero.delete.length > 0) {
                 const deleteIds = body.hero.delete.filter(id => !id.startsWith('temp_'));
-                const filtered = heroes.filter(h => !deleteIds.includes(h.id));
-                filesToUpdate['data/hero.json'] = filtered;
-            } else if (body.hero.create || body.hero.update) {
+                heroes = heroes.filter(h => !deleteIds.includes(h.id));
+            }
+            
+            // Update file if there are any changes
+            const hasChanges = 
+                (body.hero.create && body.hero.create.length > 0) ||
+                (body.hero.update && body.hero.update.length > 0) ||
+                (body.hero.delete && body.hero.delete.length > 0);
+            
+            if (hasChanges) {
                 filesToUpdate['data/hero.json'] = heroes;
             }
             
@@ -237,6 +282,7 @@ async function handleBatch(req, res) {
         
         // Get current commit SHA
         const currentCommit = await getCurrentCommit(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO);
+        const branch = currentCommit.branch || 'main';
         
         // Create tree with all file updates
         const tree = await createTree(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, currentCommit.treeSha, filesToUpdate);
@@ -245,7 +291,7 @@ async function handleBatch(req, res) {
         const commit = await createCommit(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, commitMessage, tree.sha, currentCommit.sha);
         
         // Update reference (push commit)
-        await updateReference(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, commit.sha);
+        await updateReference(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, commit.sha, branch);
 
         return res.status(200).json({ 
             success: true, 
@@ -341,8 +387,30 @@ async function saveFileToGitHub(token, owner, repo, path, data) {
 }
 
 async function getCurrentCommit(token, owner, repo) {
+    // Try to get default branch from repo info, fallback to main/master
+    let branch = 'main';
+    try {
+        const repoResponse = await fetch(
+            `https://api.github.com/repos/${owner}/${repo}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            }
+        );
+        if (repoResponse.ok) {
+            const repoData = await repoResponse.json();
+            branch = repoData.default_branch || 'main';
+        }
+    } catch (e) {
+        // Fallback to main if repo info fetch fails
+        branch = 'main';
+    }
+    
     const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/main`,
+        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
         {
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -353,6 +421,37 @@ async function getCurrentCommit(token, owner, repo) {
     );
     
     if (!response.ok) {
+        // Try master branch as fallback
+        if (branch === 'main') {
+            const masterResponse = await fetch(
+                `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/master`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                }
+            );
+            if (masterResponse.ok) {
+                const ref = await masterResponse.json();
+                const commitSha = ref.object.sha;
+                const commitResponse = await fetch(
+                    `https://api.github.com/repos/${owner}/${repo}/git/commits/${commitSha}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    }
+                );
+                if (commitResponse.ok) {
+                    const commit = await commitResponse.json();
+                    return { sha: commitSha, treeSha: commit.tree.sha, branch: 'master' };
+                }
+            }
+        }
         throw new Error('Failed to get current commit reference');
     }
     
@@ -375,7 +474,7 @@ async function getCurrentCommit(token, owner, repo) {
     }
     
     const commit = await commitResponse.json();
-    return { sha: commitSha, treeSha: commit.tree.sha };
+    return { sha: commitSha, treeSha: commit.tree.sha, branch: branch };
 }
 
 async function createTree(token, owner, repo, baseTreeSha, files) {
@@ -493,9 +592,9 @@ async function createCommit(token, owner, repo, message, treeSha, parentSha) {
     return await response.json();
 }
 
-async function updateReference(token, owner, repo, commitSha) {
+async function updateReference(token, owner, repo, commitSha, branch = 'main') {
     const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/main`,
+        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
         {
             method: 'PATCH',
             headers: {
@@ -518,16 +617,3 @@ async function updateReference(token, owner, repo, commitSha) {
     return await response.json();
 }
 
-async function verifyToken(token) {
-    if (!token) return false;
-    
-    try {
-        const tokenTimestamp = parseInt(token.slice(-8), 36);
-        const currentTime = Date.now();
-        const oneHour = 60 * 60 * 1000;
-        
-        return (currentTime - tokenTimestamp) <= oneHour;
-    } catch (error) {
-        return false;
-    }
-}

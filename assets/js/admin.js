@@ -143,7 +143,6 @@ async function checkAuth() {
             return false;
         }
     } catch (error) {
-        console.error('Auth check error:', error);
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem('admin_user');
         return false;
@@ -275,25 +274,12 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             options.body = JSON.stringify(data);
         }
 
-        console.log('[DEBUG] API Call:', {
-            endpoint: `${API_BASE}${endpoint}`,
-            method: method,
-            hasToken: !!token,
-            hasData: !!data
-        });
-        
         const response = await fetch(`${API_BASE}${endpoint}`, options);
-        
-        console.log('[DEBUG] API Response:', {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok
-        });
         
         // Handle 401 Unauthorized
         if (response.status === 401) {
-            console.log('[DEBUG] 401 Unauthorized - removing token');
             localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem('admin_user');
             showLogin();
             throw new Error('Session expired. Please login again.');
         }
@@ -305,32 +291,24 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         if (contentType && contentType.includes('application/json')) {
             try {
                 const text = await response.text();
-                console.log('[DEBUG] Response text:', text.substring(0, 200)); // Log first 200 chars
                 if (!text || text.trim() === '') {
                     throw new Error('Empty response from server');
                 }
                 result = JSON.parse(text);
             } catch (parseError) {
-                console.error('[DEBUG] JSON Parse Error:', parseError);
-                console.error('[DEBUG] Response was:', await response.clone().text());
                 throw new Error('Invalid JSON response from server: ' + parseError.message);
             }
         } else {
             const text = await response.text();
-            console.error('[DEBUG] Non-JSON response:', text.substring(0, 500));
-            throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${text.substring(0, 100)}`);
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
         }
-        
-        console.log('[DEBUG] API Response data:', result);
 
         if (!response.ok) {
-            console.error('[DEBUG] API Error response:', result);
             throw new Error(result.error || `API request failed: ${response.status}`);
         }
 
         return result;
     } catch (error) {
-        console.error('API Error:', error);
         showNotification(error.message, 'error');
         throw error;
     }
@@ -398,28 +376,47 @@ function getDisplayProducts() {
     return products;
 }
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text == null) return ''; // Handle null/undefined
+    if (typeof text !== 'string') {
+        // Convert to string for non-string types (numbers, etc.)
+        text = String(text);
+    }
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'item-card';
     const canEdit = hasPermission('edit');
+    const productId = escapeHtml(String(product.id));
     const actionsHTML = canEdit ? `
         <div class="item-card-actions">
-            <button class="btn btn-primary" onclick="editProduct('${product.id}')">
+            <button class="btn btn-primary" onclick="editProduct('${productId.replace(/'/g, "\\'")}')">
                 <i class="fas fa-edit"></i> Edit
             </button>
-            <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">
+            <button class="btn btn-danger" onclick="deleteProduct('${productId.replace(/'/g, "\\'")}')">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
     ` : '';
     
+    const productImage = escapeHtml(product.image || '');
+    const productAlt = escapeHtml(product.alt || product.name || '');
+    const productName = escapeHtml(product.name || '');
+    const productCategory = escapeHtml(product.category || '');
+    const productPrice = escapeHtml(String(product.price || ''));
+    
     card.innerHTML = `
-        <img src="${product.image}" alt="${product.alt || product.name}" onerror="this.src='assets/images/product-1.webp'">
+        <img src="${productImage}" alt="${productAlt}" onerror="this.src='assets/images/product-1.webp'">
         <div class="item-card-body">
-            <div class="item-card-title">${product.name}</div>
+            <div class="item-card-title">${productName}</div>
             <div class="item-card-info">
-                <div>Category: ${product.category}</div>
-                <div>Price: ₹${product.price}</div>
+                <div>Category: ${productCategory}</div>
+                <div>Price: ₹${productPrice}</div>
             </div>
             ${actionsHTML}
         </div>
@@ -595,18 +592,22 @@ function createGalleryCard(item) {
     const card = document.createElement('div');
     card.className = 'item-card';
     const canEdit = hasPermission('edit');
+    const itemId = escapeHtml(String(item.id));
     const actionsHTML = canEdit ? `
         <div class="item-card-actions">
-            <button class="btn btn-danger" onclick="deleteGalleryItem('${item.id}')">
+            <button class="btn btn-danger" onclick="deleteGalleryItem('${itemId.replace(/'/g, "\\'")}')">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
     ` : '';
     
+    const itemImage = escapeHtml(item.image || '');
+    const itemAlt = escapeHtml(item.alt || '');
+    
     card.innerHTML = `
-        <img src="${item.image}" alt="${item.alt}" onerror="this.src='assets/images/new-1.webp'">
+        <img src="${itemImage}" alt="${itemAlt}" onerror="this.src='assets/images/new-1.webp'">
         <div class="item-card-body">
-            <div class="item-card-title">${item.alt}</div>
+            <div class="item-card-title">${itemAlt}</div>
             ${actionsHTML}
         </div>
     `;
@@ -749,18 +750,21 @@ function createHeroCard(item) {
     const card = document.createElement('div');
     card.className = 'item-card';
     const canEdit = hasPermission('edit');
+    const itemId = escapeHtml(String(item.id));
     const actionsHTML = canEdit ? `
         <div class="item-card-actions">
-            <button class="btn btn-danger" onclick="deleteHeroImage('${item.id}')">
+            <button class="btn btn-danger" onclick="deleteHeroImage('${itemId.replace(/'/g, "\\'")}')">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
     ` : '';
     
+    const itemImage = escapeHtml(item.image || '');
+    
     card.innerHTML = `
-        <img src="${item.image}" alt="Hero Image" onerror="this.src='assets/images/hero-1.webp'">
+        <img src="${itemImage}" alt="Hero Image" onerror="this.src='assets/images/hero-1.webp'">
         <div class="item-card-body">
-            <div class="item-card-title">Hero Image ${item.id}</div>
+            <div class="item-card-title">Hero Image ${itemId}</div>
             ${actionsHTML}
         </div>
     `;
@@ -1200,21 +1204,28 @@ function createUserCard(user) {
     const card = document.createElement('div');
     card.className = 'item-card';
     
+    const username = escapeHtml(user.username || '');
+    const userRole = escapeHtml(user.role || '');
+    const userEmail = escapeHtml(user.email || `${user.username}@shreeadvaya.com`);
+    const safeUsername = username.replace(/'/g, "\\'");
+    const isDefault = user.isDefault ? ' <i class="fas fa-shield-alt" style="color: #d4af37; margin-left: 8px;" title="Default Admin User"></i>' : '';
+    const disabledAttr = user.isDefault ? 'disabled title="Cannot edit default admin user"' : '';
+    const deleteDisabledAttr = user.isDefault ? 'disabled title="Cannot delete default admin user"' : '';
+    
     card.innerHTML = `
         <div class="item-card-body">
             <div class="item-card-title">
-                ${user.username}
-                ${user.isDefault ? ' <i class="fas fa-shield-alt" style="color: #d4af37; margin-left: 8px;" title="Default Admin User"></i>' : ''}
+                ${username}${isDefault}
             </div>
             <div class="item-card-info">
-                <div>Role: ${user.role}</div>
-                <div>Email: ${user.email || `${user.username}@shreeadvaya.com`}</div>
+                <div>Role: ${userRole}</div>
+                <div>Email: ${userEmail}</div>
             </div>
             <div class="item-card-actions">
-                <button class="btn btn-primary" onclick="editUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot edit default admin user"' : ''}>
+                <button class="btn btn-primary" onclick="editUser('${safeUsername}')" ${disabledAttr}>
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="btn btn-danger" onclick="deleteUser('${user.username}')" ${user.isDefault ? 'disabled title="Cannot delete default admin user"' : ''}>
+                <button class="btn btn-danger" onclick="deleteUser('${safeUsername}')" ${deleteDisabledAttr}>
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>

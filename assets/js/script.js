@@ -1,6 +1,18 @@
 // API Base URL
 const API_BASE = '/api';
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text == null) return ''; // Handle null/undefined
+    if (typeof text !== 'string') {
+        // Convert to string for non-string types (numbers, etc.)
+        text = String(text);
+    }
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Load all dynamic content
 async function loadDynamicContent() {
     try {
@@ -35,17 +47,24 @@ async function loadProducts() {
         products.forEach((product, index) => {
             const card = document.createElement('div');
             card.className = 'product-card';
-            card.setAttribute('data-category', product.category);
+            card.setAttribute('data-category', escapeHtml(product.category || ''));
+            
+            const productImage = escapeHtml(product.image || '');
+            const productAlt = escapeHtml(product.alt || product.name || '');
+            const productName = escapeHtml(product.name || '');
+            const productPrice = escapeHtml(String(product.price || ''));
+            const safeProductName = productName.replace(/'/g, "\\'");
+            
             card.innerHTML = `
                 <div class="product-image">
-                    <img src="${product.image}" alt="${product.alt || product.name}" loading="lazy" onerror="this.src='assets/images/product-1.webp'">
+                    <img src="${productImage}" alt="${productAlt}" loading="lazy" onerror="this.src='assets/images/product-1.webp'">
                     <div class="product-overlay">
-                        <button class="btn btn-primary" onclick="openWhatsApp('${product.name}')">Inquire Now</button>
+                        <button class="btn btn-primary" onclick="openWhatsApp('${safeProductName}')">Inquire Now</button>
                     </div>
                 </div>
                 <div class="product-info">
-                    <h3>${product.name}</h3>
-                    <p class="product-price">₹${product.price}</p>
+                    <h3>${productName}</h3>
+                    <p class="product-price">₹${productPrice}</p>
                 </div>
             `;
             productsGrid.appendChild(card);
@@ -83,7 +102,9 @@ async function loadGallery() {
         gallery.forEach((item) => {
             const galleryItem = document.createElement('div');
             galleryItem.className = 'gallery-item';
-            galleryItem.innerHTML = `<img src="${item.image}" alt="${item.alt}" loading="lazy" onerror="this.src='assets/images/new-1.webp'">`;
+            const itemImage = escapeHtml(item.image || '');
+            const itemAlt = escapeHtml(item.alt || '');
+            galleryItem.innerHTML = `<img src="${itemImage}" alt="${itemAlt}" loading="lazy" onerror="this.src='assets/images/new-1.webp'">`;
             galleryGrid.appendChild(galleryItem);
         });
         
@@ -246,11 +267,25 @@ async function loadContent() {
         const whatsappEl = document.getElementById('whatsappNumber');
         const whatsappLink = document.getElementById('whatsappLink');
         if (whatsappEl) {
-            const formatted = whatsapp.replace(/(\d{2})(\d{5})(\d{5})/, '+91 $1 $2 $3');
+            // Format WhatsApp number: remove all non-digits, then format
+            const digitsOnly = whatsapp.replace(/\D/g, '');
+            let formatted = whatsapp;
+            if (digitsOnly.length === 10) {
+                // Format as Indian number: +91 XX XXX XXXX
+                formatted = `+91 ${digitsOnly.substring(0, 2)} ${digitsOnly.substring(2, 7)} ${digitsOnly.substring(7)}`;
+            } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+                // Format as +91 XX XXX XXXX
+                formatted = `+91 ${digitsOnly.substring(2, 4)} ${digitsOnly.substring(4, 9)} ${digitsOnly.substring(9)}`;
+            } else if (digitsOnly.length > 0) {
+                // Fallback: just add + if not present
+                formatted = whatsapp.startsWith('+') ? whatsapp : `+${digitsOnly}`;
+            }
             whatsappEl.textContent = formatted;
         }
         if (whatsappLink) {
-            whatsappLink.href = `https://wa.me/${whatsapp}`;
+            // Ensure WhatsApp link uses only digits (no + or spaces)
+            const digitsOnly = whatsapp.replace(/\D/g, '');
+            whatsappLink.href = `https://wa.me/${digitsOnly}`;
         }
         // Update global WhatsApp function
         window.whatsappNumber = whatsapp;

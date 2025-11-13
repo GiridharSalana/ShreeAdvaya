@@ -60,7 +60,7 @@ export function decryptPassword(encryptedPassword) {
         
         return decrypted;
     } catch (error) {
-        console.error('Decryption error:', error);
+        // Return null on decryption error (don't expose error details)
         return null;
     }
 }
@@ -114,15 +114,24 @@ export async function loadUsers() {
                 `https://api.github.com/repos/${owner}/${repo}/contents/data/users.json`,
                 {
                     headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3.raw'
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
                     }
                 }
             );
             
             if (response.ok) {
-                const loadedUsers = await response.json();
-                users = Array.isArray(loadedUsers) ? loadedUsers : [];
+                const data = await response.json();
+                // Handle base64 encoded content from GitHub API
+                if (data.content) {
+                    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+                    const loadedUsers = JSON.parse(content);
+                    users = Array.isArray(loadedUsers) ? loadedUsers : [];
+                } else {
+                    // Direct JSON response (shouldn't happen with contents API, but handle gracefully)
+                    users = Array.isArray(data) ? data : [];
+                }
             }
         }
     } catch (error) {
