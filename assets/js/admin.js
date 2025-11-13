@@ -1152,6 +1152,15 @@ async function saveAllChanges() {
 let usersData = [];
 
 async function loadUsers() {
+    // Only load users if user is admin
+    if (!hasPermission('manage_users')) {
+        const container = document.getElementById('usersList');
+        if (container) {
+            container.innerHTML = '<p>Admin access required to view users.</p>';
+        }
+        return;
+    }
+    
     try {
         const response = await apiCall('/auth?action=users');
         usersData = response.users || [];
@@ -1169,8 +1178,10 @@ async function loadUsers() {
             container.appendChild(card);
         });
     } catch (error) {
-        document.getElementById('usersList').innerHTML = 
-            '<p class="error">Error loading users. Make sure you have admin access.</p>';
+        const container = document.getElementById('usersList');
+        if (container) {
+            container.innerHTML = '<p class="error">Error loading users.</p>';
+        }
     }
 }
 
