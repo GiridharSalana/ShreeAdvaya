@@ -4,7 +4,7 @@
     "encryptedPassword": "6153a937bce01d4f75a72f7665c5447f:c5f6e767f3047c69b89312c46b8d25ca:2cdea12494658808",
     "role": "admin",
     "email": "admin@shreeadvaya.com",
-    "createdAt": "2025-11-13T17:41:30.887Z",
+    "createdAt": "2025-11-13T17:41:54.312Z",
     "isDefault": true
   },
   {
@@ -20,5 +20,12 @@
     "role": "viewer",
     "email": "Jhon@123",
     "createdAt": "2025-11-13T17:41:30.888Z"
+  },
+  {
+    "username": "Jane",
+    "encryptedPassword": "1c0e1a42a70e3007e1e0f2c3a586ceb6:3583678098b6c6250eb18bcf43567674:1e817f009c5d4012",
+    "role": "editor",
+    "email": "Jane@123",
+    "createdAt": "2025-11-13T17:41:54.313Z"
   }
 ]
