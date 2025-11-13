@@ -1,10 +1,27 @@
 // API route: /api/hero
 // Handles hero images CRUD operations via GitHub API
 
+import { verifyToken } from './auth/jwt.js';
+
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // CORS - restrict to your domain only
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://shreeadvaya.vercel.app';
+    const origin = req.headers.origin;
+    
+    if (origin && (origin === allowedOrigin || origin.includes('localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -15,8 +32,13 @@ export default async function handler(req, res) {
         const authHeader = req.headers.authorization;
         const token = authHeader?.replace('Bearer ', '');
         
-        if (!token || !(await verifyToken(token))) {
+        if (!token) {
             return res.status(401).json({ error: 'Unauthorized. Please login.' });
+        }
+
+        const verification = verifyToken(token);
+        if (!verification.valid) {
+            return res.status(401).json({ error: 'Unauthorized. Invalid or expired token.' });
         }
     }
 
@@ -95,8 +117,7 @@ export default async function handler(req, res) {
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error('API Error:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message || 'Internal server error' });
     }
 }
 
@@ -125,7 +146,7 @@ async function getFileFromGitHub(token, owner, repo, path) {
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
         return JSON.parse(content);
     } catch (error) {
-        console.error('Error fetching from GitHub:', error);
+        // Return empty array on error to prevent crashes
         return [];
     }
 }
@@ -180,17 +201,3 @@ async function saveFileToGitHub(token, owner, repo, path, data) {
     return await response.json();
 }
 
-// Token verification helper
-async function verifyToken(token) {
-    if (!token) return false;
-    
-    try {
-        const tokenTimestamp = parseInt(token.slice(-8), 36);
-        const currentTime = Date.now();
-        const oneHour = 60 * 60 * 1000;
-        
-        return (currentTime - tokenTimestamp) <= oneHour;
-    } catch (error) {
-        return false;
-    }
-}

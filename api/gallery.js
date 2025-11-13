@@ -1,10 +1,27 @@
 // API route: /api/gallery
 // Handles gallery CRUD operations via GitHub API
 
+import { verifyToken } from './auth/jwt.js';
+
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // CORS - restrict to your domain only
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://shreeadvaya.vercel.app';
+    const origin = req.headers.origin;
+    
+    if (origin && (origin === allowedOrigin || origin.includes('localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -15,8 +32,13 @@ export default async function handler(req, res) {
         const authHeader = req.headers.authorization;
         const token = authHeader?.replace('Bearer ', '');
         
-        if (!token || !(await verifyToken(token))) {
+        if (!token) {
             return res.status(401).json({ error: 'Unauthorized. Please login.' });
+        }
+
+        const verification = verifyToken(token);
+        if (!verification.valid) {
+            return res.status(401).json({ error: 'Unauthorized. Invalid or expired token.' });
         }
     }
 
@@ -79,37 +101,25 @@ export default async function handler(req, res) {
 
         if (method === 'DELETE') {
             const { id } = req.query;
-            console.log('[DEBUG] DELETE request - ID:', id);
-            console.log('[DEBUG] Query params:', req.query);
             
             if (!id) {
-                console.error('[DEBUG] Missing gallery item ID');
                 return res.status(400).json({ error: 'Gallery item ID is required' });
             }
             
-            console.log('[DEBUG] Fetching gallery from GitHub...');
             const gallery = await getFileFromGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, DATA_FILE);
-            console.log('[DEBUG] Current gallery items:', gallery.length);
-            console.log('[DEBUG] Looking for item with ID:', id);
-            
             const filtered = gallery.filter(g => g.id !== id);
-            console.log('[DEBUG] Filtered gallery items:', filtered.length);
             
             if (filtered.length === gallery.length) {
-                console.error('[DEBUG] Gallery item not found. Available IDs:', gallery.map(g => g.id));
                 return res.status(404).json({ error: 'Gallery item not found' });
             }
 
-            console.log('[DEBUG] Saving updated gallery to GitHub...');
             await saveFileToGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, DATA_FILE, filtered);
-            console.log('[DEBUG] Gallery item deleted successfully');
             return res.status(200).json({ success: true });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error('API Error:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message || 'Internal server error' });
     }
 }
 
@@ -138,7 +148,7 @@ async function getFileFromGitHub(token, owner, repo, path) {
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
         return JSON.parse(content);
     } catch (error) {
-        console.error('Error fetching from GitHub:', error);
+        // Return empty array on error to prevent crashes
         return [];
     }
 }
@@ -193,17 +203,3 @@ async function saveFileToGitHub(token, owner, repo, path, data) {
     return await response.json();
 }
 
-// Token verification helper
-async function verifyToken(token) {
-    if (!token) return false;
-    
-    try {
-        const tokenTimestamp = parseInt(token.slice(-8), 36);
-        const currentTime = Date.now();
-        const oneHour = 60 * 60 * 1000;
-        
-        return (currentTime - tokenTimestamp) <= oneHour;
-    } catch (error) {
-        return false;
-    }
-}
