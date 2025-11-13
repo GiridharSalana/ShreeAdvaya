@@ -305,16 +305,23 @@ body {
 
 /* Items Grid */
 .items-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
     padding: 20px 0;
 }
 
+.items-grid .item-card {
+    flex: 0 0 auto;
+    width: 280px;
+    max-width: 100%;
+}
+
 @media (min-width: 768px) {
-    .items-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    .items-grid .item-card {
+        width: 300px;
     }
 }
 
