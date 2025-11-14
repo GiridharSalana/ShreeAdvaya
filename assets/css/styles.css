@@ -75,7 +75,7 @@ h6 {
     font-size: 2.5rem;
     text-align: center;
     margin-bottom: 1rem;
-    color: #2c1810;
+    color: var(--text-primary);
     position: relative;
 }
 
@@ -432,7 +432,7 @@ h6 {
 /* About Section - Perfectly Centered */
 .about {
     padding: 120px 0;
-    background: #ffffff;
+    background: var(--bg-primary);
     position: relative;
 }
 
@@ -450,7 +450,7 @@ h6 {
 
 .about-description {
     font-size: 1.15rem;
-    color: #666;
+    color: var(--text-secondary);
     line-height: 1.9;
     text-align: center;
     max-width: 850px;
@@ -511,14 +511,14 @@ h6 {
 .feature h3 {
     font-size: 1.3rem;
     margin-bottom: 0.8rem;
-    color: #1a1a1a;
+    color: var(--text-primary);
     font-weight: 600;
     position: relative;
     z-index: 1;
 }
 
 .feature p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.6;
     margin: 0;
@@ -529,7 +529,7 @@ h6 {
 /* Products Section */
 .products {
     padding: 120px 0;
-    background: linear-gradient(135deg, #fefbf5 0%, #f8f4eb 100%);
+    background: var(--bg-secondary);
 }
 
 .product-categories {
@@ -620,7 +620,7 @@ h6 {
 .product-info h3 {
     font-size: 1.3rem;
     margin-bottom: 0.5rem;
-    color: #2c1810;
+    color: var(--text-primary);
 }
 
 .product-price {
@@ -632,7 +632,7 @@ h6 {
 /* Gallery Section */
 .gallery {
     padding: 100px 0;
-    background: white;
+    background: var(--bg-primary);
 }
 
 .gallery-grid {
@@ -671,7 +671,7 @@ h6 {
 /* Contact Section - Perfectly Symmetrical */
 .contact {
     padding: 120px 0;
-    background: linear-gradient(135deg, #fefbf5 0%, #f8f4eb 100%);
+    background: var(--bg-secondary);
 }
 
 .contact-content {
@@ -687,15 +687,15 @@ h6 {
     display: flex;
     flex-direction: column;
     padding: 3rem;
-    background: white;
+    background: var(--card-bg);
     border-radius: 25px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 40px var(--shadow-light);
 }
 
 .contact-section-title {
     font-size: 2rem;
     margin-bottom: 1.5rem;
-    color: #1a1a1a;
+    color: var(--text-primary);
     font-family: 'Playfair Display', serif;
     font-weight: 600;
     text-align: center;
@@ -729,7 +729,7 @@ h6 {
     align-items: center;
     gap: 1.5rem;
     padding: 1.5rem;
-    background: linear-gradient(135deg, #fefbf5 0%, #ffffff 100%);
+    background: var(--bg-tertiary);
     border-radius: 20px;
     border: 1px solid rgba(212, 175, 55, 0.15);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -757,12 +757,12 @@ h6 {
 .contact-item h3 {
     font-size: 1.2rem;
     margin-bottom: 0.3rem;
-    color: #1a1a1a;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .contact-item p {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 0.3rem;
     font-size: 0.95rem;
 }
@@ -826,8 +826,8 @@ h6 {
 
 /* Footer - Perfectly Centered & Symmetrical */
 .footer {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2c2520 100%);
-    color: white;
+    background: var(--footer-bg);
+    color: var(--footer-text);
     padding: 70px 0 30px;
 }
 
