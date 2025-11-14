@@ -91,8 +91,21 @@ function hasPermission(action) {
     return false;
 }
 
+// Setup theme toggle listeners (needs to work on login screen too)
+function setupThemeListeners() {
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const theme = e.currentTarget.dataset.theme;
+            switchTheme(theme);
+        });
+    });
+}
+
 // Check authentication on load
 document.addEventListener('DOMContentLoaded', async () => {
+    // Setup theme listeners immediately (works for both login and dashboard)
+    setupThemeListeners();
+    
     const isAuthenticated = await checkAuth();
     if (isAuthenticated) {
         showDashboard();
@@ -1265,14 +1278,6 @@ function setupEventListeners() {
     document.getElementById('searchProducts')?.addEventListener('input', filterProducts);
     document.getElementById('searchGallery')?.addEventListener('input', filterGallery);
     document.getElementById('searchUsers')?.addEventListener('input', filterUsers);
-    
-    // Theme switcher buttons
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const theme = e.currentTarget.dataset.theme;
-            switchTheme(theme);
-        });
-    });
 }
 
 // Filter Products
