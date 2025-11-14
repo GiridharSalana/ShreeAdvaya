@@ -1089,26 +1089,25 @@ function renderFeaturesForm(features) {
     features.forEach((feature, index) => {
         const featureDiv = document.createElement('div');
         featureDiv.className = 'feature-form-item';
-        featureDiv.style.cssText = 'border: 2px solid #e0e0e0; padding: 20px; margin-bottom: 15px; border-radius: 8px; background: #f9f9f9;';
         featureDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h4 style="margin: 0; color: #2c1810;">Feature ${index + 1}</h4>
-                <button type="button" class="btn btn-danger" onclick="removeFeatureField(this)" style="padding: 5px 15px; font-size: 0.85rem;">
+            <div class="feature-header">
+                <h4>Feature ${index + 1}</h4>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeFeatureField(this)">
                     <i class="fas fa-trash"></i> Remove
                 </button>
             </div>
             <div class="form-group">
                 <label>Icon Class (Font Awesome)</label>
-                <input type="text" class="feature-icon" value="${feature.icon || ''}" placeholder="fas fa-gem">
+                <input type="text" class="feature-icon" value="${escapeHtml(feature.icon || '')}" placeholder="fas fa-gem">
                 <small>Example: fas fa-gem, fas fa-palette, fas fa-shipping-fast</small>
             </div>
             <div class="form-group">
                 <label>Title</label>
-                <input type="text" class="feature-title" value="${feature.title || ''}" placeholder="Premium Quality">
+                <input type="text" class="feature-title" value="${escapeHtml(feature.title || '')}" placeholder="Premium Quality">
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea class="feature-description" rows="2" placeholder="Handpicked finest materials...">${feature.description || ''}</textarea>
+                <textarea class="feature-description" rows="2" placeholder="Handpicked finest materials...">${escapeHtml(feature.description || '')}</textarea>
             </div>
         `;
         container.appendChild(featureDiv);
