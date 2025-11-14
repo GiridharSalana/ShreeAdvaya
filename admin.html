@@ -23,6 +23,11 @@
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
+        <div class="theme-toggle-login">
+            <button class="theme-btn" data-theme="light" title="Light Mode">☀️</button>
+            <button class="theme-btn active" data-theme="system" title="System">💻</button>
+            <button class="theme-btn" data-theme="dark" title="Dark Mode">🌙</button>
+        </div>
         <div class="login-container">
             <!-- Login Box -->
             <div id="loginBox" class="login-box">
@@ -58,6 +63,11 @@
             <div class="header-content">
                 <h1><i class="fas fa-cog"></i> ShreeAdvaya Admin Panel</h1>
                 <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="theme-toggle">
+                        <button class="theme-btn" data-theme="light" title="Light Mode">☀️</button>
+                        <button class="theme-btn active" data-theme="system" title="System">💻</button>
+                        <button class="theme-btn" data-theme="dark" title="Dark Mode">🌙</button>
+                    </div>
                     <span id="currentUser" style="color: #d4af37; font-weight: 500;"></span>
                     <button id="logoutBtn" class="btn btn-secondary">
                         <i class="fas fa-sign-out-alt"></i> Logout

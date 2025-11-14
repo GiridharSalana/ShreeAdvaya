@@ -1,6 +1,49 @@
 // Admin Panel JavaScript
 const API_BASE = '/api';
 const STORAGE_KEY = 'admin_token';
+const THEME_KEY = 'admin_theme';
+
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'system';
+    applyTheme(savedTheme);
+    updateThemeButtons(savedTheme);
+}
+
+function applyTheme(theme) {
+    if (theme === 'system') {
+        // Detect system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+}
+
+function updateThemeButtons(theme) {
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+}
+
+function switchTheme(theme) {
+    localStorage.setItem(THEME_KEY, theme);
+    applyTheme(theme);
+    updateThemeButtons(theme);
+}
+
+// Listen for system theme changes when set to 'system'
+if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        const savedTheme = localStorage.getItem(THEME_KEY) || 'system';
+        if (savedTheme === 'system') {
+            applyTheme('system');
+        }
+    });
+}
+
+// Initialize theme immediately (before DOM loads)
+initTheme();
 
 // User management functionality moved to admin panel
 
@@ -1222,6 +1265,14 @@ function setupEventListeners() {
     document.getElementById('searchProducts')?.addEventListener('input', filterProducts);
     document.getElementById('searchGallery')?.addEventListener('input', filterGallery);
     document.getElementById('searchUsers')?.addEventListener('input', filterUsers);
+    
+    // Theme switcher buttons
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const theme = e.currentTarget.dataset.theme;
+            switchTheme(theme);
+        });
+    });
 }
 
 // Filter Products

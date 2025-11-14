@@ -1,4 +1,42 @@
 /* Admin Panel Styles */
+
+/* CSS Variables for Theme */
+:root {
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f9f9f9;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --border-color: #e0e0e0;
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+    --modal-bg: #ffffff;
+    --accent-gold: #d4af37;
+    --accent-gold-light: #ffd700;
+    --header-bg: linear-gradient(135deg, #2c1810, #5d4037);
+    --login-bg: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #242424;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #808080;
+    --border-color: #404040;
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.5);
+    --card-bg: #2d2d2d;
+    --input-bg: #242424;
+    --modal-bg: #2d2d2d;
+    --header-bg: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+    --login-bg: linear-gradient(135deg, #2c1810, #1a1208);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -7,8 +45,49 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: #f5f5f5;
-    color: #333;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme Toggle */
+.theme-toggle,
+.theme-toggle-login {
+    display: flex;
+    gap: 5px;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.theme-toggle-login {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.theme-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+}
+
+.theme-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.theme-btn.active {
+    background: var(--accent-gold);
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
 }
 
 /* Login Screen */
@@ -17,7 +96,8 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+    background: var(--login-bg);
+    position: relative;
 }
 
 .login-container {
@@ -27,16 +107,16 @@ body {
 }
 
 .login-box {
-    background: white;
+    background: var(--card-bg);
     padding: 40px;
     border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 40px var(--shadow-light);
 }
 
 .login-box h1 {
     text-align: center;
     margin-bottom: 30px;
-    color: #2c1810;
+    color: var(--text-primary);
     font-size: 1.8rem;
     display: flex;
     align-items: center;
@@ -57,7 +137,7 @@ body {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .form-group input,
@@ -65,17 +145,19 @@ body {
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.3s;
+    background: var(--input-bg);
+    color: var(--text-primary);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #d4af37;
+    border-color: var(--accent-gold);
 }
 
 .error-message {
@@ -177,10 +259,10 @@ body {
 }
 
 .admin-header {
-    background: linear-gradient(135deg, #2c1810, #1a0f0a);
+    background: var(--header-bg);
     color: white;
     padding: 20px 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px var(--shadow-light);
 }
 
 .header-content {
@@ -294,20 +376,21 @@ body {
     max-width: 600px;
     padding: 12px 20px;
     font-size: 1rem;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-color);
     border-radius: 25px;
     outline: none;
     transition: all 0.3s ease;
-    background: #fff;
+    background: var(--input-bg);
+    color: var(--text-primary);
 }
 
 .search-input:focus {
-    border-color: #d4af37;
+    border-color: var(--accent-gold);
     box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
 .search-input::placeholder {
-    color: #999;
+    color: var(--text-tertiary);
 }
 
 .save-all-container {
@@ -421,10 +504,10 @@ body {
 }
 
 .item-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px var(--shadow-light);
     transition: transform 0.3s;
 }
 
@@ -447,7 +530,7 @@ body {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 8px;
-    color: #2c1810;
+    color: var(--text-primary);
 }
 
 .item-card-info {
@@ -526,7 +609,7 @@ body {
 
 .modal-content h2 {
     margin-bottom: 20px;
-    color: #2c1810;
+    color: var(--text-primary);
 }
 
 .modal-actions {
