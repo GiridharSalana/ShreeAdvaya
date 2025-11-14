@@ -1405,73 +1405,73 @@ function showPreviewModal() {
     
     // Products
     if (pendingChanges.products.create.length > 0 || pendingChanges.products.update.length > 0 || pendingChanges.products.delete.length > 0) {
-        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-box"></i> Products</h3>';
+        html += '<div class="preview-section"><h3 class="preview-section-title"><i class="fas fa-box"></i> Products</h3>';
         if (pendingChanges.products.create.length > 0) {
-            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.products.create.length} new product(s)</div>`;
+            html += `<div class="preview-action preview-create">✅ Create: ${pendingChanges.products.create.length} new product(s)</div>`;
         }
         if (pendingChanges.products.update.length > 0) {
-            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.products.update.length} product(s)</div>`;
+            html += `<div class="preview-action preview-update">📝 Update: ${pendingChanges.products.update.length} product(s)</div>`;
         }
         if (pendingChanges.products.delete.length > 0) {
-            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.products.delete.length} product(s)</div>`;
+            html += `<div class="preview-action preview-delete">🗑️ Delete: ${pendingChanges.products.delete.length} product(s)</div>`;
         }
         html += '</div>';
     }
     
     // Gallery
     if (pendingChanges.gallery.create.length > 0 || pendingChanges.gallery.update.length > 0 || pendingChanges.gallery.delete.length > 0) {
-        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-images"></i> Gallery</h3>';
+        html += '<div class="preview-section"><h3 class="preview-section-title"><i class="fas fa-images"></i> Gallery</h3>';
         if (pendingChanges.gallery.create.length > 0) {
-            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.gallery.create.length} new image(s)</div>`;
+            html += `<div class="preview-action preview-create">✅ Create: ${pendingChanges.gallery.create.length} new image(s)</div>`;
         }
         if (pendingChanges.gallery.update.length > 0) {
-            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.gallery.update.length} image(s)</div>`;
+            html += `<div class="preview-action preview-update">📝 Update: ${pendingChanges.gallery.update.length} image(s)</div>`;
         }
         if (pendingChanges.gallery.delete.length > 0) {
-            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.gallery.delete.length} image(s)</div>`;
+            html += `<div class="preview-action preview-delete">🗑️ Delete: ${pendingChanges.gallery.delete.length} image(s)</div>`;
         }
         html += '</div>';
     }
     
     // Hero Images
     if (pendingChanges.hero.create.length > 0 || pendingChanges.hero.update.length > 0 || pendingChanges.hero.delete.length > 0) {
-        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-image"></i> Hero Images</h3>';
+        html += '<div class="preview-section"><h3 class="preview-section-title"><i class="fas fa-image"></i> Hero Images</h3>';
         if (pendingChanges.hero.create.length > 0) {
-            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.hero.create.length} new hero image(s)</div>`;
+            html += `<div class="preview-action preview-create">✅ Create: ${pendingChanges.hero.create.length} new hero image(s)</div>`;
         }
         if (pendingChanges.hero.update.length > 0) {
-            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.hero.update.length} hero image(s)</div>`;
+            html += `<div class="preview-action preview-update">📝 Update: ${pendingChanges.hero.update.length} hero image(s)</div>`;
         }
         if (pendingChanges.hero.delete.length > 0) {
-            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.hero.delete.length} hero image(s)</div>`;
+            html += `<div class="preview-action preview-delete">🗑️ Delete: ${pendingChanges.hero.delete.length} hero image(s)</div>`;
         }
         html += '</div>';
     }
     
     // Users
     if (pendingChanges.users.create.length > 0 || pendingChanges.users.update.length > 0 || pendingChanges.users.delete.length > 0) {
-        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-users"></i> Users</h3>';
+        html += '<div class="preview-section"><h3 class="preview-section-title"><i class="fas fa-users"></i> Users</h3>';
         if (pendingChanges.users.create.length > 0) {
-            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.users.create.length} new user(s)</div>`;
+            html += `<div class="preview-action preview-create">✅ Create: ${pendingChanges.users.create.length} new user(s)</div>`;
         }
         if (pendingChanges.users.update.length > 0) {
-            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.users.update.length} user(s)</div>`;
+            html += `<div class="preview-action preview-update">📝 Update: ${pendingChanges.users.update.length} user(s)</div>`;
         }
         if (pendingChanges.users.delete.length > 0) {
-            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.users.delete.length} user(s)</div>`;
+            html += `<div class="preview-action preview-delete">🗑️ Delete: ${pendingChanges.users.delete.length} user(s)</div>`;
         }
         html += '</div>';
     }
     
     // Content
     if (pendingChanges.content.update) {
-        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-file-alt"></i> Content</h3>';
-        html += '<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: Site content modified</div>';
+        html += '<div class="preview-section"><h3 class="preview-section-title"><i class="fas fa-file-alt"></i> Content</h3>';
+        html += '<div class="preview-action preview-update">📝 Update: Site content modified</div>';
         html += '</div>';
     }
     
     if (html === '') {
-        html = '<p style="text-align: center; color: #999;">No pending changes to save.</p>';
+        html = '<p class="preview-empty">No pending changes to save.</p>';
     }
     
     previewContent.innerHTML = html;

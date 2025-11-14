@@ -688,6 +688,41 @@ body {
     margin-bottom: 20px;
 }
 
+.preview-section {
+    margin-bottom: 20px;
+}
+
+.preview-section-title {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.preview-action {
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.preview-create {
+    color: #4CAF50;
+}
+
+.preview-update {
+    color: #2196F3;
+}
+
+.preview-delete {
+    color: #f44336;
+}
+
+.preview-empty {
+    text-align: center;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
 /* Content Form */
 .content-form {
     background: var(--card-bg);
