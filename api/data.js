@@ -2,6 +2,7 @@
 // Handles content and batch operations via query parameter ?action=content|batch
 
 import { verifyToken } from './auth/jwt.js';
+import { encryptPassword } from './auth/users.js';
 
 export default async function handler(req, res) {
     // Security headers
@@ -266,6 +267,107 @@ async function handleBatch(req, res) {
         if (body.content && body.content.update) {
             filesToUpdate['data/content.json'] = body.content.update;
             results.content = { success: true };
+        }
+
+        // Process Users
+        if (body.users) {
+            // Only admins can modify users
+            if (verification.user.role !== 'admin') {
+                return res.status(403).json({ error: 'Admin access required to manage users' });
+            }
+            
+            let users = await getFileFromGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, 'data/users.json');
+            
+            if (body.users.update) {
+                body.users.update.forEach(update => {
+                    const index = users.findIndex(u => u.username.toLowerCase() === update.username.toLowerCase());
+                    if (index !== -1) {
+                        // Don't allow changing default admin user role or username
+                        if (users[index].isDefault) {
+                            if (update.role && update.role !== 'admin') {
+                                return; // Skip this update
+                            }
+                        }
+                        
+                        // Update user fields
+                        if (update.password) {
+                            users[index].encryptedPassword = encryptPassword(update.password);
+                        }
+                        if (update.role && !users[index].isDefault) {
+                            users[index].role = update.role;
+                        }
+                        if (update.email !== undefined) {
+                            users[index].email = update.email || `${update.username}@shreeadvaya.com`;
+                        }
+                        users[index].updatedAt = new Date().toISOString();
+                    }
+                });
+            }
+            
+            if (body.users.create) {
+                body.users.create.forEach(item => {
+                    // Check if username already exists
+                    if (users.find(u => u.username.toLowerCase() === item.username.toLowerCase())) {
+                        return; // Skip duplicates
+                    }
+                    
+                    const newUser = {
+                        username: item.username.trim(),
+                        encryptedPassword: encryptPassword(item.password),
+                        role: item.role || 'editor',
+                        email: item.email || `${item.username}@shreeadvaya.com`,
+                        createdAt: new Date().toISOString()
+                    };
+                    users.push(newUser);
+                });
+            }
+            
+            // Apply deletions
+            if (body.users.delete && body.users.delete.length > 0) {
+                const deleteUsernames = body.users.delete.map(u => u.toLowerCase());
+                users = users.filter(u => {
+                    // Don't delete default admin or current user
+                    if (u.isDefault) return true;
+                    if (u.username.toLowerCase() === verification.user.username.toLowerCase()) return true;
+                    return !deleteUsernames.includes(u.username.toLowerCase());
+                });
+            }
+            
+            // Ensure default admin user always exists
+            const adminPassword = process.env.ADMIN_PASSWORD;
+            if (adminPassword) {
+                const adminExists = users.some(u => u.username.toLowerCase() === 'admin');
+                if (!adminExists) {
+                    users.unshift({
+                        username: 'Admin',
+                        encryptedPassword: encryptPassword(adminPassword),
+                        role: 'admin',
+                        email: 'admin@shreeadvaya.com',
+                        createdAt: new Date().toISOString(),
+                        isDefault: true
+                    });
+                } else {
+                    // Mark admin user as default
+                    const adminIndex = users.findIndex(u => u.username.toLowerCase() === 'admin');
+                    if (adminIndex !== -1) {
+                        users[adminIndex].isDefault = true;
+                    }
+                }
+            }
+            
+            // Update file if there are any changes
+            const hasChanges = 
+                (body.users.create && body.users.create.length > 0) ||
+                (body.users.update && body.users.update.length > 0) ||
+                (body.users.delete && body.users.delete.length > 0);
+            
+            if (hasChanges) {
+                filesToUpdate['data/users.json'] = users;
+            }
+            
+            if (filesToUpdate['data/users.json']) {
+                results.users = { success: true, count: filesToUpdate['data/users.json'].length };
+            }
         }
 
         // Save all files in a single commit using GitHub Git Data API

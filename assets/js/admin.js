@@ -9,7 +9,8 @@ const pendingChanges = {
     products: { create: [], update: [], delete: [] },
     gallery: { create: [], update: [], delete: [] },
     hero: { create: [], update: [], delete: [] },
-    content: { update: null }
+    content: { update: null },
+    users: { create: [], update: [], delete: [] }
 };
 
 // Original data cache
@@ -17,7 +18,8 @@ const originalData = {
     products: [],
     gallery: [],
     hero: [],
-    content: {}
+    content: {},
+    users: []
 };
 
 // Get current user role
@@ -1160,6 +1162,7 @@ function updatePendingCount() {
     count += pendingChanges.products.create.length + pendingChanges.products.update.length + pendingChanges.products.delete.length;
     count += pendingChanges.gallery.create.length + pendingChanges.gallery.update.length + pendingChanges.gallery.delete.length;
     count += pendingChanges.hero.create.length + pendingChanges.hero.update.length + pendingChanges.hero.delete.length;
+    count += pendingChanges.users.create.length + pendingChanges.users.update.length + pendingChanges.users.delete.length;
     if (pendingChanges.content.update) count += 1;
     
     const saveBtn = document.getElementById('saveAllBtn');
@@ -1234,6 +1237,17 @@ async function saveAllChanges() {
             };
         }
         
+        // Users
+        if (pendingChanges.users.create.length > 0 || 
+            pendingChanges.users.update.length > 0 || 
+            pendingChanges.users.delete.length > 0) {
+            batchData.users = {
+                create: pendingChanges.users.create,
+                update: pendingChanges.users.update,
+                delete: pendingChanges.users.delete
+            };
+        }
+        
         // Send batch request
         const result = await apiCall('/data?action=batch', 'POST', batchData);
         
@@ -1241,6 +1255,7 @@ async function saveAllChanges() {
         pendingChanges.products = { create: [], update: [], delete: [] };
         pendingChanges.gallery = { create: [], update: [], delete: [] };
         pendingChanges.hero = { create: [], update: [], delete: [] };
+        pendingChanges.users = { create: [], update: [], delete: [] };
         pendingChanges.content.update = null;
         
         updatePendingCount();
@@ -1259,7 +1274,33 @@ async function saveAllChanges() {
 }
 
 // User Management
-let usersData = [];
+
+// Get users with pending changes applied
+function getDisplayUsers() {
+    let users = JSON.parse(JSON.stringify(originalData.users));
+    
+    // Apply updates
+    pendingChanges.users.update.forEach(update => {
+        const index = users.findIndex(u => u.username.toLowerCase() === update.username.toLowerCase());
+        if (index !== -1) {
+            // Merge update into existing user (don't include password in display)
+            users[index] = { ...users[index], ...update };
+            if (update.password) {
+                // Mark that password will be updated (don't show actual password)
+                users[index]._passwordUpdated = true;
+            }
+        }
+    });
+    
+    // Add new users
+    users.push(...pendingChanges.users.create.map(u => ({ ...u, _isNew: true })));
+    
+    // Remove deleted users
+    const deleteUsernames = pendingChanges.users.delete.map(u => u.toLowerCase());
+    users = users.filter(u => !deleteUsernames.includes(u.username.toLowerCase()));
+    
+    return users;
+}
 
 async function loadUsers() {
     // Only load users if user is admin
@@ -1273,20 +1314,24 @@ async function loadUsers() {
     
     try {
         const response = await apiCall('/auth?action=users');
-        usersData = response.users || [];
+        originalData.users = JSON.parse(JSON.stringify(response.users || [])); // Deep copy
         
+        const displayUsers = getDisplayUsers();
         const container = document.getElementById('usersList');
         container.innerHTML = '';
 
-        if (usersData.length === 0) {
+        if (displayUsers.length === 0) {
             container.innerHTML = '<p>No users found. Add your first user!</p>';
             return;
         }
 
-        usersData.forEach(user => {
+        displayUsers.forEach(user => {
             const card = createUserCard(user);
             container.appendChild(card);
         });
+        
+        // Apply role-based access after loading
+        applyRoleBasedAccess();
     } catch (error) {
         const container = document.getElementById('usersList');
         if (container) {
@@ -1347,7 +1392,8 @@ function openUserModal(username = null) {
 
     if (username) {
         title.textContent = 'Edit User';
-        const user = usersData.find(u => u.username === username);
+        const displayUsers = getDisplayUsers();
+        const user = displayUsers.find(u => u.username === username);
         if (user) {
             document.getElementById('userUsername').value = user.username;
             document.getElementById('userName').value = user.username;
@@ -1406,39 +1452,50 @@ document.getElementById('userForm')?.addEventListener('submit', async (e) => {
         return;
     }
     
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    
     try {
         if (isEdit) {
-            // Update user
+            // Remove from create if it was a new user
+            pendingChanges.users.create = pendingChanges.users.create.filter(u => u.username.toLowerCase() !== username.toLowerCase());
+            
+            // Add to update queue
             const updateData = { username, role, email };
             if (password) {
                 updateData.password = password;
             }
             
-            await apiCall('/auth?action=users', 'PUT', updateData);
-            showNotification('User updated successfully!', 'success');
+            const existingUpdateIndex = pendingChanges.users.update.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+            if (existingUpdateIndex !== -1) {
+                pendingChanges.users.update[existingUpdateIndex] = updateData;
+            } else {
+                pendingChanges.users.update.push(updateData);
+            }
+            
+            showNotification('User changes saved locally. Click "Save All Changes" to commit.', 'info');
         } else {
-            // Create new user
-            await apiCall('/auth?action=register', 'POST', {
+            // Check if username already exists in original or pending
+            const displayUsers = getDisplayUsers();
+            if (displayUsers.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+                errorMsg.textContent = 'Username already exists';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Add new user
+            pendingChanges.users.create.push({
                 username,
                 password,
-                email: email || undefined,
+                email: email || `${username}@shreeadvaya.com`,
                 role
             });
-            showNotification('User created successfully!', 'success');
+            showNotification('User added locally. Click "Save All Changes" to commit.', 'info');
         }
         
         closeModal('userModal');
-        await loadUsers();
+        loadUsers();
+        updatePendingCount();
     } catch (error) {
         errorMsg.textContent = error.message || 'Failed to save user';
         errorMsg.classList.add('show');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
     }
 });
 
@@ -1452,14 +1509,34 @@ async function deleteUser(username) {
         return;
     }
     
+    // Check if user is default admin
+    const displayUsers = getDisplayUsers();
+    const user = displayUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (user && user.isDefault) {
+        showNotification('Cannot delete default admin user', 'error');
+        return;
+    }
+    
     if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
         return;
     }
 
     try {
-        await apiCall('/auth?action=users', 'DELETE', { username });
-        showNotification('User deleted successfully!', 'success');
-        await loadUsers();
+        // Remove from create queue if it's a new user
+        const wasInCreate = pendingChanges.users.create.some(u => u.username.toLowerCase() === username.toLowerCase());
+        pendingChanges.users.create = pendingChanges.users.create.filter(u => u.username.toLowerCase() !== username.toLowerCase());
+        
+        // Remove from update queue
+        pendingChanges.users.update = pendingChanges.users.update.filter(u => u.username.toLowerCase() !== username.toLowerCase());
+        
+        // Add to delete queue (only if it was in original data)
+        if (!wasInCreate && !pendingChanges.users.delete.some(u => u.toLowerCase() === username.toLowerCase())) {
+            pendingChanges.users.delete.push(username);
+        }
+        
+        showNotification('User marked for deletion. Click "Save All Changes" to commit.', 'info');
+        loadUsers();
+        updatePendingCount();
     } catch (error) {
         showNotification('Error deleting user: ' + error.message, 'error');
     }
