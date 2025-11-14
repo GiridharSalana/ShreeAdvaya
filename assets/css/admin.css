@@ -18,6 +18,9 @@
     --accent-gold-light: #ffd700;
     --header-bg: linear-gradient(135deg, #2c1810, #5d4037);
     --login-bg: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+    --btn-secondary-bg: #6c757d;
+    --btn-secondary-hover: #5a6268;
+    --success-bg: #e8f5e9;
 }
 
 [data-theme="dark"] {
@@ -35,6 +38,9 @@
     --modal-bg: #2d2d2d;
     --header-bg: linear-gradient(135deg, #0d0d0d, #1a1a1a);
     --login-bg: linear-gradient(135deg, #2c1810, #1a1208);
+    --btn-secondary-bg: #5a5a5a;
+    --btn-secondary-hover: #707070;
+    --success-bg: #1e3a1e;
 }
 
 * {
@@ -69,20 +75,6 @@ body {
     z-index: 100;
 }
 
-.theme-toggle-bottom {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    display: flex;
-    gap: 5px;
-    background: var(--bg-tertiary);
-    padding: 4px;
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 12px var(--shadow-medium);
-}
 
 .theme-btn {
     background: transparent;
@@ -220,7 +212,7 @@ body {
     margin-top: 15px;
     font-size: 0.9rem;
     padding: 10px;
-    background: #e8f5e9;
+    background: var(--success-bg);
     border-radius: 5px;
     border: 1px solid #a5d6a7;
 }
@@ -252,12 +244,12 @@ body {
 }
 
 .btn-secondary {
-    background: #6c757d;
+    background: var(--btn-secondary-bg);
     color: white;
 }
 
 .btn-secondary:hover {
-    background: #5a6268;
+    background: var(--btn-secondary-hover);
 }
 
 .btn-danger {
@@ -287,6 +279,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
+}
+
+.theme-toggle-header {
+    display: flex;
+    gap: 5px;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
 }
 
 .admin-header h1 {
@@ -412,7 +414,7 @@ body {
 .save-all-container {
     margin-top: 40px;
     padding-top: 30px;
-    border-top: 2px solid #e0e0e0;
+    border-top: 2px solid var(--border-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -643,7 +645,7 @@ body {
 .image-preview img {
     width: 100%;
     border-radius: 8px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-color);
 }
 
 .form-group small,
@@ -699,10 +701,12 @@ body {
 .content-form .form-group textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.3s;
+    background: var(--input-bg);
+    color: var(--text-primary);
 }
 
 .content-form .form-group input:focus,
