@@ -181,7 +181,7 @@ h6 {
     position: fixed;
     top: 0;
     width: 100%;
-    background: rgba(var(--nav-bg-rgb), 0.95);
+    background: rgba(var(--nav-bg-rgb), 0.95) !important;
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 10px var(--shadow-light);
     z-index: 1000;

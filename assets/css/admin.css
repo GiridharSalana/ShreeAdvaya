@@ -69,6 +69,21 @@ body {
     z-index: 100;
 }
 
+.theme-toggle-bottom {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 5px;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
 .theme-btn {
     background: transparent;
     border: none;
@@ -571,7 +586,7 @@ body {
 }
 
 .modal-content {
-    background: white;
+    background: var(--modal-bg);
     padding: 30px;
     border-radius: 15px;
     max-width: 600px;
@@ -631,21 +646,36 @@ body {
     border: 2px solid #e0e0e0;
 }
 
-.form-group small {
+.form-group small,
+.form-hint {
     display: block;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.85rem;
     margin-top: 5px;
 }
 
+.modal-description {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.preview-content-box {
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
 /* Content Form */
 .content-form {
-    background: white;
+    background: var(--card-bg);
     padding: 40px;
     border-radius: 12px;
     max-width: 900px;
     margin: 0 auto;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px var(--shadow-light);
 }
 
 .content-form textarea {
@@ -661,7 +691,7 @@ body {
     display: block;
     margin-bottom: 10px;
     font-weight: 600;
-    color: #2c1810;
+    color: var(--text-primary);
     font-size: 1rem;
 }
 
