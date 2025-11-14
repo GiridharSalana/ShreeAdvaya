@@ -13,5 +13,12 @@
     "role": "admin",
     "email": "giridharsalana@gmail.com",
     "createdAt": "2025-11-13T17:24:41.004Z"
+  },
+  {
+    "username": "Test",
+    "encryptedPassword": "e81d96a71fb35de125576a4f4a9521cd:9b364e3636d0a08265b3fa7649104b0d:943abd72d95fb3c6",
+    "role": "viewer",
+    "email": "test@girimail.com",
+    "createdAt": "2025-11-14T17:21:21.100Z"
   }
 ]
