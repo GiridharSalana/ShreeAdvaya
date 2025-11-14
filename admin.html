@@ -90,6 +90,9 @@
                     <div class="section-header">
                         <h2>Manage Products</h2>
                     </div>
+                    <div class="search-container">
+                        <input type="text" id="searchProducts" class="search-input" placeholder="🔍 Search products by name or category...">
+                    </div>
                     <div id="productsList" class="items-grid">
                         <!-- Products will be loaded here -->
                     </div>
@@ -104,6 +107,9 @@
                 <div id="galleryTab" class="tab-content">
                     <div class="section-header">
                         <h2>Manage Gallery</h2>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" id="searchGallery" class="search-input" placeholder="🔍 Search images by alt text...">
                     </div>
                     <div id="galleryList" class="items-grid">
                         <!-- Gallery items will be loaded here -->
@@ -202,6 +208,9 @@
                     <div class="section-header">
                         <h2>Manage Users</h2>
                     </div>
+                    <div class="search-container">
+                        <input type="text" id="searchUsers" class="search-input" placeholder="🔍 Search users by username or role...">
+                    </div>
                     <div id="usersList" class="items-grid">
                         <!-- Users will be loaded here -->
                     </div>
@@ -212,8 +221,11 @@
                     </div>
                 </div>
                 
-                <!-- Save All Changes Button -->
+                <!-- Save All Changes Buttons -->
                 <div class="save-all-container">
+                    <button id="discardAllBtn" class="btn btn-warning" style="display: none;">
+                        <i class="fas fa-undo"></i> Discard All Changes
+                    </button>
                     <button id="saveAllBtn" class="btn btn-success" style="display: none;">
                         <i class="fas fa-save"></i> Save All Changes <span id="pendingCount" class="pending-badge">0</span>
                     </button>
@@ -363,6 +375,26 @@
                 </div>
             </form>
             <p class="error-message" id="userError"></p>
+        </div>
+    </div>
+
+    <!-- Preview Changes Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="closeModal('previewModal')">&times;</span>
+            <h2><i class="fas fa-eye"></i> Preview Changes</h2>
+            <p style="color: #666; margin-bottom: 20px;">Review all pending changes before committing:</p>
+            <div id="previewContent" style="max-height: 400px; overflow-y: auto; background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <!-- Preview content will be dynamically inserted here -->
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="closeModal('previewModal')" style="min-width: 150px;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button id="confirmSaveBtn" class="btn btn-success" style="min-width: 150px;">
+                    <i class="fas fa-check"></i> Confirm & Save
+                </button>
+            </div>
         </div>
     </div>
 

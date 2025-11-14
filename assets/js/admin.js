@@ -55,6 +55,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         showDashboard();
         setupEventListeners();
         applyRoleBasedAccess();
+        
+        // Restore pending changes from localStorage if any
+        restoreFromLocalStorage();
+        
         loadData();
     } else {
         showLogin();
@@ -322,8 +326,11 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     });
 });
 
-// API Functions
-async function apiCall(endpoint, method = 'GET', data = null) {
+// API Functions with retry logic
+async function apiCall(endpoint, method = 'GET', data = null, retryCount = 0) {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // 1 second
+    
     try {
         const token = localStorage.getItem(STORAGE_KEY);
         if (!token) {
@@ -353,6 +360,14 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             showLogin();
             throw new Error('Session expired. Please login again.');
         }
+        
+        // Retry on server errors (5xx)
+        if (response.status >= 500 && response.status < 600 && retryCount < MAX_RETRIES) {
+            const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+            console.log(`Server error ${response.status}. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return await apiCall(endpoint, method, data, retryCount + 1);
+        }
 
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
@@ -366,6 +381,13 @@ async function apiCall(endpoint, method = 'GET', data = null) {
                 }
                 result = JSON.parse(text);
             } catch (parseError) {
+                // Retry on parse errors if we have retries left
+                if (retryCount < MAX_RETRIES) {
+                    const delay = RETRY_DELAY * Math.pow(2, retryCount);
+                    console.log(`Parse error. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return await apiCall(endpoint, method, data, retryCount + 1);
+                }
                 throw new Error('Invalid JSON response from server: ' + parseError.message);
             }
         } else {
@@ -379,7 +401,18 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
         return result;
     } catch (error) {
-        showNotification(error.message, 'error');
+        // Retry on network errors
+        if ((error.name === 'TypeError' || error.message.includes('fetch')) && retryCount < MAX_RETRIES) {
+            const delay = RETRY_DELAY * Math.pow(2, retryCount);
+            console.log(`Network error. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return await apiCall(endpoint, method, data, retryCount + 1);
+        }
+        
+        // Only show notification on final failure
+        if (retryCount >= MAX_RETRIES || !error.message.includes('Session expired')) {
+            showNotification(error.message, 'error');
+        }
         throw error;
     }
 }
@@ -1117,26 +1150,50 @@ const uploadedImages = {
 
 function handleImagePreview(event, previewId, type) {
     const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const preview = document.getElementById(previewId);
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 8px;">`;
-            
-            // Store the base64 data URL for use in form submission
-            if (type === 'product') {
-                uploadedImages.product = e.target.result;
-                document.getElementById('productImage').removeAttribute('required');
-            } else if (type === 'gallery') {
-                uploadedImages.gallery = e.target.result;
-                document.getElementById('galleryImage').removeAttribute('required');
-            } else if (type === 'hero') {
-                uploadedImages.hero = e.target.result;
-                document.getElementById('heroImage').removeAttribute('required');
-            }
-        };
-        reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+        showNotification('Invalid file type. Please upload a JPEG, PNG, WEBP, or GIF image.', 'error');
+        event.target.value = ''; // Clear the input
+        return;
     }
+    
+    // Validate file size (2MB limit)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+        showNotification('File size exceeds 2MB. Please choose a smaller image or compress it.', 'error');
+        event.target.value = ''; // Clear the input
+        return;
+    }
+    
+    // Show warning if file is over 500KB
+    if (file.size > 500 * 1024) {
+        showNotification(`Image is ${(file.size / 1024 / 1024).toFixed(2)}MB. Consider compressing for better performance.`, 'warning');
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const preview = document.getElementById(previewId);
+        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 8px;">`;
+        
+        // Store the base64 data URL for use in form submission
+        if (type === 'product') {
+            uploadedImages.product = e.target.result;
+            document.getElementById('productImage').removeAttribute('required');
+        } else if (type === 'gallery') {
+            uploadedImages.gallery = e.target.result;
+            document.getElementById('galleryImage').removeAttribute('required');
+        } else if (type === 'hero') {
+            uploadedImages.hero = e.target.result;
+            document.getElementById('heroImage').removeAttribute('required');
+        }
+    };
+    reader.onerror = () => {
+        showNotification('Error reading file. Please try again.', 'error');
+    };
+    reader.readAsDataURL(file);
 }
 
 // Notification system
@@ -1146,14 +1203,66 @@ function showNotification(message, type = 'success') {
     notification.className = `notification ${type}`;
     notification.classList.add('show');
 
+    // Longer timeout for warnings
+    const timeout = type === 'warning' ? 5000 : 3000;
     setTimeout(() => {
         notification.classList.remove('show');
-    }, 3000);
+    }, timeout);
 }
 
 function setupEventListeners() {
-    // Save All Changes button
-    document.getElementById('saveAllBtn')?.addEventListener('click', saveAllChanges);
+    // Save All Changes button - shows preview
+    document.getElementById('saveAllBtn')?.addEventListener('click', showPreviewModal);
+    // Discard All Changes button
+    document.getElementById('discardAllBtn')?.addEventListener('click', discardAllChanges);
+    // Confirm Save button in preview modal
+    document.getElementById('confirmSaveBtn')?.addEventListener('click', confirmAndSave);
+    
+    // Search functionality
+    document.getElementById('searchProducts')?.addEventListener('input', filterProducts);
+    document.getElementById('searchGallery')?.addEventListener('input', filterGallery);
+    document.getElementById('searchUsers')?.addEventListener('input', filterUsers);
+}
+
+// Filter Products
+function filterProducts(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const productCards = document.querySelectorAll('#productsList .item-card');
+    
+    productCards.forEach(card => {
+        const name = card.querySelector('.item-card-title')?.textContent.toLowerCase() || '';
+        const category = card.querySelector('.item-card-info')?.textContent.toLowerCase() || '';
+        const matches = name.includes(searchTerm) || category.includes(searchTerm);
+        
+        card.style.display = matches ? '' : 'none';
+    });
+}
+
+// Filter Gallery
+function filterGallery(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const galleryCards = document.querySelectorAll('#galleryList .item-card');
+    
+    galleryCards.forEach(card => {
+        const alt = card.querySelector('.item-card-title')?.textContent.toLowerCase() || '';
+        const matches = alt.includes(searchTerm);
+        
+        card.style.display = matches ? '' : 'none';
+    });
+}
+
+// Filter Users
+function filterUsers(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const userCards = document.querySelectorAll('#usersList .item-card');
+    
+    userCards.forEach(card => {
+        const username = card.querySelector('.item-card-title')?.textContent.toLowerCase() || '';
+        const info = card.querySelector('.item-card-info')?.textContent.toLowerCase() || '';
+        const matches = username.includes(searchTerm) || info.includes(searchTerm);
+        
+        card.style.display = matches ? '' : 'none';
+    });
 }
 
 // Update pending changes count
@@ -1166,14 +1275,182 @@ function updatePendingCount() {
     if (pendingChanges.content.update) count += 1;
     
     const saveBtn = document.getElementById('saveAllBtn');
+    const discardBtn = document.getElementById('discardAllBtn');
     const countBadge = document.getElementById('pendingCount');
     
     if (count > 0) {
         saveBtn.style.display = 'inline-flex';
+        discardBtn.style.display = 'inline-flex';
         countBadge.textContent = count;
+        
+        // Save to localStorage for recovery
+        saveToLocalStorage();
     } else {
         saveBtn.style.display = 'none';
+        discardBtn.style.display = 'none';
+        
+        // Clear localStorage
+        clearLocalStorage();
     }
+}
+
+// LocalStorage backup functions
+function saveToLocalStorage() {
+    try {
+        localStorage.setItem('admin_pending_changes', JSON.stringify(pendingChanges));
+        localStorage.setItem('admin_pending_timestamp', new Date().toISOString());
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+    }
+}
+
+function restoreFromLocalStorage() {
+    try {
+        const savedChanges = localStorage.getItem('admin_pending_changes');
+        const timestamp = localStorage.getItem('admin_pending_timestamp');
+        
+        if (savedChanges && timestamp) {
+            const savedDate = new Date(timestamp);
+            const now = new Date();
+            const hoursSince = (now - savedDate) / (1000 * 60 * 60);
+            
+            // Only restore if less than 24 hours old
+            if (hoursSince < 24) {
+                const parsed = JSON.parse(savedChanges);
+                Object.assign(pendingChanges, parsed);
+                updatePendingCount();
+                
+                if (Object.values(parsed).some(v => v && (Array.isArray(v.create) ? v.create.length > 0 : v))) {
+                    showNotification('Restored unsaved changes from previous session.', 'info');
+                }
+            } else {
+                // Clear old data
+                clearLocalStorage();
+            }
+        }
+    } catch (error) {
+        console.error('Error restoring from localStorage:', error);
+        clearLocalStorage();
+    }
+}
+
+function clearLocalStorage() {
+    try {
+        localStorage.removeItem('admin_pending_changes');
+        localStorage.removeItem('admin_pending_timestamp');
+    } catch (error) {
+        console.error('Error clearing localStorage:', error);
+    }
+}
+
+// Show preview modal before saving
+function showPreviewModal() {
+    const previewContent = document.getElementById('previewContent');
+    let html = '';
+    
+    // Products
+    if (pendingChanges.products.create.length > 0 || pendingChanges.products.update.length > 0 || pendingChanges.products.delete.length > 0) {
+        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-box"></i> Products</h3>';
+        if (pendingChanges.products.create.length > 0) {
+            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.products.create.length} new product(s)</div>`;
+        }
+        if (pendingChanges.products.update.length > 0) {
+            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.products.update.length} product(s)</div>`;
+        }
+        if (pendingChanges.products.delete.length > 0) {
+            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.products.delete.length} product(s)</div>`;
+        }
+        html += '</div>';
+    }
+    
+    // Gallery
+    if (pendingChanges.gallery.create.length > 0 || pendingChanges.gallery.update.length > 0 || pendingChanges.gallery.delete.length > 0) {
+        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-images"></i> Gallery</h3>';
+        if (pendingChanges.gallery.create.length > 0) {
+            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.gallery.create.length} new image(s)</div>`;
+        }
+        if (pendingChanges.gallery.update.length > 0) {
+            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.gallery.update.length} image(s)</div>`;
+        }
+        if (pendingChanges.gallery.delete.length > 0) {
+            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.gallery.delete.length} image(s)</div>`;
+        }
+        html += '</div>';
+    }
+    
+    // Hero Images
+    if (pendingChanges.hero.create.length > 0 || pendingChanges.hero.update.length > 0 || pendingChanges.hero.delete.length > 0) {
+        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-image"></i> Hero Images</h3>';
+        if (pendingChanges.hero.create.length > 0) {
+            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.hero.create.length} new hero image(s)</div>`;
+        }
+        if (pendingChanges.hero.update.length > 0) {
+            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.hero.update.length} hero image(s)</div>`;
+        }
+        if (pendingChanges.hero.delete.length > 0) {
+            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.hero.delete.length} hero image(s)</div>`;
+        }
+        html += '</div>';
+    }
+    
+    // Users
+    if (pendingChanges.users.create.length > 0 || pendingChanges.users.update.length > 0 || pendingChanges.users.delete.length > 0) {
+        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-users"></i> Users</h3>';
+        if (pendingChanges.users.create.length > 0) {
+            html += `<div style="color: #4CAF50; margin-bottom: 5px;">✅ Create: ${pendingChanges.users.create.length} new user(s)</div>`;
+        }
+        if (pendingChanges.users.update.length > 0) {
+            html += `<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: ${pendingChanges.users.update.length} user(s)</div>`;
+        }
+        if (pendingChanges.users.delete.length > 0) {
+            html += `<div style="color: #f44336; margin-bottom: 5px;">🗑️ Delete: ${pendingChanges.users.delete.length} user(s)</div>`;
+        }
+        html += '</div>';
+    }
+    
+    // Content
+    if (pendingChanges.content.update) {
+        html += '<div style="margin-bottom: 20px;"><h3 style="color: #2c1810; margin-bottom: 10px;"><i class="fas fa-file-alt"></i> Content</h3>';
+        html += '<div style="color: #2196F3; margin-bottom: 5px;">📝 Update: Site content modified</div>';
+        html += '</div>';
+    }
+    
+    if (html === '') {
+        html = '<p style="text-align: center; color: #999;">No pending changes to save.</p>';
+    }
+    
+    previewContent.innerHTML = html;
+    document.getElementById('previewModal').classList.add('active');
+}
+
+// Confirm and save from preview modal
+async function confirmAndSave() {
+    closeModal('previewModal');
+    await saveAllChanges();
+}
+
+// Discard all pending changes
+async function discardAllChanges() {
+    if (!confirm('Are you sure you want to discard all pending changes? This action cannot be undone.')) {
+        return;
+    }
+    
+    // Clear all pending changes
+    pendingChanges.products = { create: [], update: [], delete: [] };
+    pendingChanges.gallery = { create: [], update: [], delete: [] };
+    pendingChanges.hero = { create: [], update: [], delete: [] };
+    pendingChanges.users = { create: [], update: [], delete: [] };
+    pendingChanges.content.update = null;
+    
+    // Clear localStorage backup
+    clearLocalStorage();
+    
+    // Update UI
+    updatePendingCount();
+    showNotification('All pending changes have been discarded.', 'info');
+    
+    // Reload data to reflect original state
+    await loadData();
 }
 
 // Save all pending changes in a single batch commit
