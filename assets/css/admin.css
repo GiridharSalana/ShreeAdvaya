@@ -84,20 +84,19 @@ body {
 
 /* Fixed bottom theme toggle for all screens */
 .theme-toggle-mobile {
-    display: flex !important;
+    display: flex;
     gap: 5px;
-    position: fixed !important;
-    bottom: 20px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    z-index: 10000 !important;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
     background: var(--bg-tertiary);
     padding: 8px;
     border-radius: 25px;
     border: 2px solid var(--border-color);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    visibility: visible !important;
-    opacity: 1 !important;
+    pointer-events: auto;
 }
 
 

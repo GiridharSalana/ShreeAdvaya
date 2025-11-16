@@ -60,13 +60,13 @@ function handleThemeToggleVisibility() {
     
     // Always show bottom toggle, hide header toggle
     if (mobileToggle) {
-        mobileToggle.style.setProperty('display', 'flex', 'important');
+        mobileToggle.style.display = 'flex';
     }
     if (headerToggle) {
-        headerToggle.style.setProperty('display', 'none', 'important');
+        headerToggle.style.display = 'none';
     }
     if (loginToggle) {
-        loginToggle.style.setProperty('display', 'flex', 'important');
+        loginToggle.style.display = 'flex';
     }
 }
 
@@ -156,23 +156,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setupThemeListeners(); // Re-setup listeners for mobile toggle
                 handleThemeToggleVisibility(); // Ensure correct toggle is visible
                 
-                // Force show mobile toggle
-                const mobileToggle = document.querySelector('.theme-toggle-mobile');
-                if (mobileToggle) {
-                    mobileToggle.style.setProperty('display', 'flex', 'important');
-                    mobileToggle.style.setProperty('visibility', 'visible', 'important');
-                    mobileToggle.style.setProperty('opacity', '1', 'important');
-                }
-                
-                // Double-check after a short delay to ensure it's still visible
-                setTimeout(() => {
-                    handleThemeToggleVisibility();
-                    const mobileToggle2 = document.querySelector('.theme-toggle-mobile');
-                    if (mobileToggle2) {
-                        mobileToggle2.style.setProperty('display', 'flex', 'important');
-                        mobileToggle2.style.setProperty('visibility', 'visible', 'important');
-                    }
-                }, 200);
+        // Ensure mobile toggle is visible
+        const mobileToggle = document.querySelector('.theme-toggle-mobile');
+        if (mobileToggle) {
+            mobileToggle.style.display = 'flex';
+            mobileToggle.style.visibility = 'visible';
+            mobileToggle.style.opacity = '1';
+        }
+        
+        // Double-check after a short delay
+        setTimeout(() => {
+            handleThemeToggleVisibility();
+            if (mobileToggle) {
+                mobileToggle.style.display = 'flex';
+                mobileToggle.style.visibility = 'visible';
+            }
+        }, 200);
             }, 50);
         });
         
@@ -376,7 +375,7 @@ function showLogin() {
     // Hide mobile toggle on login screen (login has its own toggle)
     const mobileToggle = document.querySelector('.theme-toggle-mobile');
     if (mobileToggle) {
-        mobileToggle.style.setProperty('display', 'none', 'important');
+        mobileToggle.style.display = 'none';
     }
 }
 
@@ -387,22 +386,20 @@ function showDashboard() {
     // Show mobile toggle when dashboard is visible
     const mobileToggle = document.querySelector('.theme-toggle-mobile');
     if (mobileToggle) {
-        mobileToggle.style.setProperty('display', 'flex', 'important');
-        mobileToggle.style.setProperty('visibility', 'visible', 'important');
-        mobileToggle.style.setProperty('opacity', '1', 'important');
+        mobileToggle.style.display = 'flex';
+        mobileToggle.style.visibility = 'visible';
+        mobileToggle.style.opacity = '1';
     }
     
     // Immediately set theme toggle visibility after showing dashboard
     requestAnimationFrame(() => {
         handleThemeToggleVisibility();
         
-        // Force show mobile toggle with multiple methods
+        // Ensure mobile toggle is visible
         if (mobileToggle) {
-            mobileToggle.style.setProperty('display', 'flex', 'important');
-            mobileToggle.style.setProperty('visibility', 'visible', 'important');
-            mobileToggle.style.setProperty('opacity', '1', 'important');
-            mobileToggle.style.setProperty('position', 'fixed', 'important');
-            mobileToggle.style.setProperty('z-index', '10000', 'important');
+            mobileToggle.style.display = 'flex';
+            mobileToggle.style.visibility = 'visible';
+            mobileToggle.style.opacity = '1';
         }
     });
 }
