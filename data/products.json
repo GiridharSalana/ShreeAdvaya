@@ -7,7 +7,12 @@
     "image": "assets/images/product-2.webp",
     "alt": "Handwoven Cotton Saree",
     "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2025-11-14T17:29:52.216Z"
+    "updatedAt": "2025-11-16T15:09:28.837Z",
+    "images": [
+      "assets/images/product-2.webp",
+      "https://images.pexels.com/photos/1387037/pexels-photo-1387037.jpeg",
+      "https://cdn.pixabay.com/photo/2017/03/27/12/50/flower-2178507_1280.jpg"
+    ]
   },
   {
     "id": "3",
