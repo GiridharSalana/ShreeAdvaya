@@ -42,8 +42,39 @@ if (window.matchMedia) {
     });
 }
 
-// Initialize theme immediately (before DOM loads)
+// Initialize theme immediately (before DOM loads) - for FOUC prevention
 initTheme();
+
+// Re-initialize theme buttons after DOM is ready (to catch mobile toggle)
+function reinitThemeButtons() {
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'system';
+    updateThemeButtons(savedTheme);
+}
+
+// Handle window resize to ensure theme toggle visibility
+function handleThemeToggleVisibility() {
+    const isMobile = window.innerWidth <= 768;
+    const mobileToggle = document.querySelector('.theme-toggle-mobile');
+    const headerToggle = document.querySelector('.theme-toggle-header');
+    
+    if (isMobile) {
+        // On mobile, ensure mobile toggle is visible
+        if (mobileToggle) {
+            mobileToggle.style.display = 'flex';
+        }
+        if (headerToggle) {
+            headerToggle.style.display = 'none';
+        }
+    } else {
+        // On desktop, ensure header toggle is visible
+        if (mobileToggle) {
+            mobileToggle.style.display = 'none';
+        }
+        if (headerToggle) {
+            headerToggle.style.display = 'flex';
+        }
+    }
+}
 
 // User management functionality moved to admin panel
 
@@ -106,6 +137,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup theme listeners immediately (works for both login and dashboard)
     setupThemeListeners();
     
+    // Re-initialize theme buttons now that DOM is ready
+    reinitThemeButtons();
+    
+    // Set initial theme toggle visibility
+    handleThemeToggleVisibility();
+    
     const isAuthenticated = await checkAuth();
     if (isAuthenticated) {
         showDashboard();
@@ -116,8 +153,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         restoreFromLocalStorage();
         
         loadData();
+        
+        // Re-initialize theme buttons after dashboard is shown (mobile toggle is in dashboard)
+        setTimeout(() => {
+            reinitThemeButtons();
+            setupThemeListeners(); // Re-setup listeners for mobile toggle
+            handleThemeToggleVisibility(); // Ensure correct toggle is visible
+        }, 100);
+        
+        // Handle resize events
+        window.addEventListener('resize', handleThemeToggleVisibility);
     } else {
         showLogin();
+        // Re-initialize theme buttons for login page
+        setTimeout(() => {
+            reinitThemeButtons();
+            handleThemeToggleVisibility(); // Ensure correct toggle is visible
+        }, 100);
+        
+        // Handle resize events
+        window.addEventListener('resize', handleThemeToggleVisibility);
     }
 });
 
@@ -1220,6 +1275,33 @@ async function loadContent() {
         if (displayContent.email) document.getElementById('contactEmail').value = displayContent.email;
         if (displayContent.phone) document.getElementById('contactPhone').value = displayContent.phone;
         if (displayContent.whatsapp) document.getElementById('whatsappNumber').value = displayContent.whatsapp;
+        
+        // Site Identity
+        if (displayContent.siteName) document.getElementById('siteName').value = displayContent.siteName;
+        if (displayContent.pageTitle) document.getElementById('pageTitle').value = displayContent.pageTitle;
+        if (displayContent.metaDescription) document.getElementById('metaDescription').value = displayContent.metaDescription;
+        if (displayContent.logo) document.getElementById('logoUrl').value = displayContent.logo;
+        if (displayContent.favicon) document.getElementById('faviconUrl').value = displayContent.favicon;
+        
+        // Footer Content
+        if (displayContent.footerCompanyName) document.getElementById('footerCompanyName').value = displayContent.footerCompanyName;
+        if (displayContent.copyrightText) document.getElementById('copyrightText').value = displayContent.copyrightText;
+        if (displayContent.designerLink) document.getElementById('designerLink').value = displayContent.designerLink;
+        if (displayContent.designerName) document.getElementById('designerName').value = displayContent.designerName;
+        
+        // Load logo and favicon previews if they exist
+        if (displayContent.logo) {
+            const logoPreview = document.getElementById('logoPreview');
+            if (logoPreview) {
+                logoPreview.innerHTML = `<img src="${escapeHtml(displayContent.logo)}" alt="Logo Preview" style="max-width: 200px; border-radius: 8px;">`;
+            }
+        }
+        if (displayContent.favicon) {
+            const faviconPreview = document.getElementById('faviconPreview');
+            if (faviconPreview) {
+                faviconPreview.innerHTML = `<img src="${escapeHtml(displayContent.favicon)}" alt="Favicon Preview" style="max-width: 64px; border-radius: 8px;">`;
+            }
+        }
     } catch (error) {
         console.error('Error loading content:', error);
     }
@@ -1286,7 +1368,26 @@ function getFeaturesFromForm() {
 document.getElementById('contentForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    const logoUrl = document.getElementById('logoUrl').value.trim();
+    const faviconUrl = document.getElementById('faviconUrl').value.trim();
+    const uploadedLogo = uploadedImages.logo;
+    const uploadedFavicon = uploadedImages.favicon;
+    
     const contentData = {
+        // Site Identity
+        siteName: document.getElementById('siteName').value.trim(),
+        pageTitle: document.getElementById('pageTitle').value.trim(),
+        metaDescription: document.getElementById('metaDescription').value.trim(),
+        logo: uploadedLogo || logoUrl || 'assets/images/logo.svg',
+        favicon: uploadedFavicon || faviconUrl || 'assets/images/favicon.svg',
+        
+        // Footer Content
+        footerCompanyName: document.getElementById('footerCompanyName').value.trim(),
+        copyrightText: document.getElementById('copyrightText').value.trim(),
+        designerLink: document.getElementById('designerLink').value.trim(),
+        designerName: document.getElementById('designerName').value.trim(),
+        
+        // Hero section
         hero: {
             title: document.getElementById('heroTitle').value.trim(),
             subtitle: document.getElementById('heroSubtitle').value.trim()
@@ -1304,6 +1405,10 @@ document.getElementById('contentForm')?.addEventListener('submit', async (e) => 
         phone: document.getElementById('contactPhone').value.trim(),
         whatsapp: document.getElementById('whatsappNumber').value.trim()
     };
+    
+    // Clear uploaded images after use
+    uploadedImages.logo = null;
+    uploadedImages.favicon = null;
 
     try {
         pendingChanges.content.update = contentData;
@@ -1336,11 +1441,21 @@ document.getElementById('heroImageUpload')?.addEventListener('change', (e) => {
     handleImagePreview(e, 'heroImagePreview', 'hero');
 });
 
+document.getElementById('logoUpload')?.addEventListener('change', (e) => {
+    handleImagePreview(e, 'logoPreview', 'logo');
+});
+
+document.getElementById('faviconUpload')?.addEventListener('change', (e) => {
+    handleImagePreview(e, 'faviconPreview', 'favicon');
+});
+
 // Store uploaded image data
 const uploadedImages = {
     product: null,
     gallery: null,
-    hero: null
+    hero: null,
+    logo: null,
+    favicon: null
 };
 
 function handleImagePreview(event, previewId, type) {
@@ -1383,6 +1498,12 @@ function handleImagePreview(event, previewId, type) {
         } else if (type === 'hero') {
             uploadedImages.hero = e.target.result;
             document.getElementById('heroImage').removeAttribute('required');
+        } else if (type === 'logo') {
+            uploadedImages.logo = e.target.result;
+            document.getElementById('logoUrl').value = ''; // Clear URL when image uploaded
+        } else if (type === 'favicon') {
+            uploadedImages.favicon = e.target.result;
+            document.getElementById('faviconUrl').value = ''; // Clear URL when image uploaded
         }
     };
     reader.onerror = () => {

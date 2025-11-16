@@ -171,7 +171,63 @@
                         <h2>Edit Website Content</h2>
                     </div>
                     <form id="contentForm" class="content-form">
-                        <h3 class="section-divider">Hero Section</h3>
+                        <h3 class="section-divider">Site Identity</h3>
+                        <div class="form-group">
+                            <label>Site Name</label>
+                            <input type="text" id="siteName" placeholder="ShreeAdvaya">
+                            <small>This appears in the navigation bar and footer</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Page Title</label>
+                            <input type="text" id="pageTitle" placeholder="ShreeAdvaya - Premium Saree Collection">
+                            <small>Browser tab title and SEO</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Meta Description</label>
+                            <textarea id="metaDescription" rows="2" placeholder="Discover exquisite sarees at ShreeAdvaya..."></textarea>
+                            <small>SEO description shown in search results</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Logo Image URL</label>
+                            <input type="text" id="logoUrl" placeholder="assets/images/logo.svg">
+                            <small>Or upload new logo below</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Upload Logo</label>
+                            <input type="file" id="logoUpload" accept="image/*">
+                            <div id="logoPreview" class="image-preview"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Favicon Image URL</label>
+                            <input type="text" id="faviconUrl" placeholder="assets/images/favicon.svg">
+                            <small>Or upload new favicon below</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Upload Favicon</label>
+                            <input type="file" id="faviconUpload" accept="image/*">
+                            <div id="faviconPreview" class="image-preview"></div>
+                        </div>
+
+                        <h3 class="section-divider" style="margin-top: 30px;">Footer Content</h3>
+                        <div class="form-group">
+                            <label>Footer Company Name</label>
+                            <input type="text" id="footerCompanyName" placeholder="ShreeAdvaya">
+                        </div>
+                        <div class="form-group">
+                            <label>Copyright Text</label>
+                            <input type="text" id="copyrightText" placeholder="&copy; 2024 ShreeAdvaya. All rights reserved.">
+                        </div>
+                        <div class="form-group">
+                            <label>Designer/Creator Link</label>
+                            <input type="url" id="designerLink" placeholder="https://giridharsalana.vercel.app">
+                            <small>Link for "Made By" text in footer</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Designer/Creator Name</label>
+                            <input type="text" id="designerName" placeholder="Giridhar Salana">
+                        </div>
+
+                        <h3 class="section-divider" style="margin-top: 30px;">Hero Section</h3>
                         <div class="form-group">
                             <label>Hero Title</label>
                             <input type="text" id="heroTitle" placeholder="Elegance Redefined">
