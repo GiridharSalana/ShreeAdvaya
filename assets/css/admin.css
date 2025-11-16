@@ -81,6 +81,21 @@ body {
     border: 1px solid var(--border-color);
 }
 
+/* Fixed bottom theme toggle for mobile */
+.theme-toggle-mobile {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: var(--bg-tertiary);
+    padding: 8px;
+    border-radius: 25px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
 
 .theme-btn {
     background: transparent;
@@ -899,6 +914,29 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* Hide theme toggle in header on mobile */
+    .theme-toggle-header {
+        display: none;
+    }
+    
+    /* Show fixed bottom theme toggle on mobile */
+    .theme-toggle-mobile {
+        display: flex;
+        gap: 5px;
+    }
+    
+    /* Move login theme toggle to bottom on mobile */
+    .theme-toggle-login {
+        top: auto;
+        bottom: 20px;
+        transform: translateX(-50%);
+    }
+    
+    /* Add padding to login container for theme toggle */
+    .login-container {
+        padding-bottom: 80px;
+    }
+
     .admin-header {
         padding: 15px;
     }
@@ -940,6 +978,7 @@ body {
 
     .admin-container {
         min-height: calc(100vh - 220px);
+        padding-bottom: 80px; /* Space for fixed bottom theme toggle */
     }
 
     .notification {
