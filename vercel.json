@@ -3,6 +3,10 @@
     {
       "source": "/admin",
       "destination": "/admin.html"
+    },
+    {
+      "source": "/data/:path*",
+      "destination": "/data/:path*"
     }
   ],
   "headers": [

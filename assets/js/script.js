@@ -69,18 +69,33 @@ async function loadDynamicContent() {
 
 // Helper function to fetch with fallback to local JSON
 async function fetchWithFallback(apiPath, fallbackPath) {
+    // Try API first
     try {
-        const response = await fetch(`${API_BASE}${apiPath}`);
+        const response = await fetch(`${API_BASE}${apiPath}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
         if (response.ok) {
             return await response.json();
         }
+        // If API returns 404, immediately try fallback without logging
+        if (response.status === 404) {
+            // Silently fall through to fallback
+        }
     } catch (error) {
-        // Silently try fallback
+        // Network error or other issue - try fallback
     }
     
     // Fallback to local JSON file
     try {
-        const fallbackResponse = await fetch(fallbackPath);
+        const fallbackResponse = await fetch(fallbackPath, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
         if (fallbackResponse.ok) {
             return await fallbackResponse.json();
         }
