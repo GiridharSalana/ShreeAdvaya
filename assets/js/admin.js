@@ -52,15 +52,15 @@ function reinitThemeButtons() {
 }
 
 // Handle window resize to ensure theme toggle visibility
-// Theme toggle is now always at bottom for all screens
+// Theme toggle is now part of page flow, below Save All Changes buttons
 function handleThemeToggleVisibility() {
     const mobileToggle = document.querySelector('.theme-toggle-mobile');
     const headerToggle = document.querySelector('.theme-toggle-header');
     const loginToggle = document.querySelector('.theme-toggle-login');
     
-    // Always show bottom toggle, hide header toggle
+    // Always show bottom toggle (in page flow), hide header toggle
     if (mobileToggle) {
-        mobileToggle.style.display = 'flex';
+        mobileToggle.style.display = 'inline-flex';
     }
     if (headerToggle) {
         headerToggle.style.display = 'none';
@@ -156,57 +156,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setupThemeListeners(); // Re-setup listeners for mobile toggle
                 handleThemeToggleVisibility(); // Ensure correct toggle is visible
                 
-        // Ensure mobile toggle is visible
-        const mobileToggle = document.querySelector('.theme-toggle-mobile');
-        if (mobileToggle) {
-            mobileToggle.style.display = 'flex';
-            mobileToggle.style.visibility = 'visible';
-            mobileToggle.style.opacity = '1';
-        }
-        
-        // Double-check after a short delay
-        setTimeout(() => {
-            handleThemeToggleVisibility();
-            if (mobileToggle) {
-                mobileToggle.style.display = 'flex';
-                mobileToggle.style.visibility = 'visible';
-            }
-        }, 200);
+                // Theme toggle is now part of page flow, no special handling needed
             }, 50);
         });
         
-        // Handle resize events
-        window.addEventListener('resize', handleThemeToggleVisibility);
     } else {
         showLogin();
         // Re-initialize theme buttons for login page
         requestAnimationFrame(() => {
             setTimeout(() => {
                 reinitThemeButtons();
-                handleThemeToggleVisibility(); // Ensure correct toggle is visible
+                handleThemeToggleVisibility();
             }, 50);
         });
-        
-        // Handle resize events
-        window.addEventListener('resize', handleThemeToggleVisibility);
-    }
-});
-
-// Also handle on window load (backup for refresh scenarios)
-window.addEventListener('load', () => {
-    // Small delay to ensure everything is rendered
-    setTimeout(() => {
-        handleThemeToggleVisibility();
-        reinitThemeButtons();
-    }, 100);
-});
-
-// Handle page visibility changes (when tab becomes visible again)
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        setTimeout(() => {
-            handleThemeToggleVisibility();
-        }, 50);
     }
 });
 
@@ -372,35 +334,16 @@ function showLogin() {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('adminDashboard').style.display = 'none';
     
-    // Hide mobile toggle on login screen (login has its own toggle)
-    const mobileToggle = document.querySelector('.theme-toggle-mobile');
-    if (mobileToggle) {
-        mobileToggle.style.display = 'none';
-    }
+    // Theme toggle is in dashboard, so it's hidden when login is shown (dashboard is hidden)
 }
 
 function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
     
-    // Show mobile toggle when dashboard is visible
-    const mobileToggle = document.querySelector('.theme-toggle-mobile');
-    if (mobileToggle) {
-        mobileToggle.style.display = 'flex';
-        mobileToggle.style.visibility = 'visible';
-        mobileToggle.style.opacity = '1';
-    }
-    
-    // Immediately set theme toggle visibility after showing dashboard
+    // Theme toggle is now part of page flow, no need to force visibility
     requestAnimationFrame(() => {
         handleThemeToggleVisibility();
-        
-        // Ensure mobile toggle is visible
-        if (mobileToggle) {
-            mobileToggle.style.display = 'flex';
-            mobileToggle.style.visibility = 'visible';
-            mobileToggle.style.opacity = '1';
-        }
     });
 }
 

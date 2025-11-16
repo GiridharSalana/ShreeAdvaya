@@ -82,21 +82,23 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Fixed bottom theme toggle for all screens */
+/* Theme toggle container - below Save All Changes buttons */
+.theme-toggle-bottom {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Theme toggle - part of page flow, not floating */
 .theme-toggle-mobile {
-    display: flex;
+    display: inline-flex;
     gap: 5px;
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
     background: var(--bg-tertiary);
     padding: 8px;
     border-radius: 25px;
     border: 2px solid var(--border-color);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    pointer-events: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -391,7 +393,6 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding-bottom: 80px; /* Space for fixed bottom theme toggle on all screens */
 }
 
 /* Admin Content */
@@ -978,7 +979,6 @@ body {
 
     .admin-container {
         min-height: calc(100vh - 220px);
-        padding-bottom: 80px; /* Space for fixed bottom theme toggle on all screens */
     }
 
     .notification {
