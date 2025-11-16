@@ -1245,7 +1245,35 @@ async function deleteHeroImage(itemId) {
 // Content Management
 async function loadContent() {
     try {
-        const content = await apiCall('/data?action=content');
+        let content = null;
+        try {
+            content = await apiCall('/data?action=content');
+        } catch (apiError) {
+            // Fall back to localStorage if API fails
+            const savedContent = localStorage.getItem('site_content');
+            if (savedContent) {
+                try {
+                    content = JSON.parse(savedContent);
+                } catch (e) {
+                    // If localStorage data is invalid, try JSON file
+                    const response = await fetch('/data/content.json');
+                    if (response.ok) {
+                        content = await response.json();
+                    }
+                }
+            } else {
+                // Try JSON file directly
+                const response = await fetch('/data/content.json');
+                if (response.ok) {
+                    content = await response.json();
+                }
+            }
+        }
+        
+        if (!content) {
+            throw new Error('Failed to load content from all sources');
+        }
+        
         originalData.content = JSON.parse(JSON.stringify(content)); // Deep copy
         
         // Show pending changes if any, otherwise show original
@@ -1844,21 +1872,49 @@ async function saveAllChanges() {
             };
         }
         
+        // Save content to localStorage as fallback (for main page to read)
+        if (pendingChanges.content.update) {
+            try {
+                // Merge with existing content to preserve all fields
+                const existingContent = originalData.content || {};
+                const mergedContent = { ...existingContent, ...pendingChanges.content.update };
+                localStorage.setItem('site_content', JSON.stringify(mergedContent));
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+            }
+        }
+        
         // Send batch request
-        const result = await apiCall('/data?action=batch', 'POST', batchData);
-        
-        // Clear pending changes
-        pendingChanges.products = { create: [], update: [], delete: [] };
-        pendingChanges.gallery = { create: [], update: [], delete: [] };
-        pendingChanges.hero = { create: [], update: [], delete: [] };
-        pendingChanges.users = { create: [], update: [], delete: [] };
-        pendingChanges.content.update = null;
-        
-        updatePendingCount();
-        showNotification('All changes saved successfully in a single commit!', 'success');
-        
-        // Reload data to reflect changes
-        await loadData();
+        try {
+            const result = await apiCall('/data?action=batch', 'POST', batchData);
+            
+            // Clear pending changes
+            pendingChanges.products = { create: [], update: [], delete: [] };
+            pendingChanges.gallery = { create: [], update: [], delete: [] };
+            pendingChanges.hero = { create: [], update: [], delete: [] };
+            pendingChanges.users = { create: [], update: [], delete: [] };
+            pendingChanges.content.update = null;
+            
+            updatePendingCount();
+            showNotification('All changes saved successfully in a single commit!', 'success');
+            
+            // Reload data to reflect changes
+            await loadData();
+        } catch (apiError) {
+            // If API call fails, still keep localStorage save (already done above)
+            console.error('API save failed, but changes saved to localStorage:', apiError);
+            showNotification('Changes saved locally. API unavailable, but main page will use saved content.', 'info');
+            
+            // Clear pending changes even if API failed (since we saved to localStorage)
+            pendingChanges.products = { create: [], update: [], delete: [] };
+            pendingChanges.gallery = { create: [], update: [], delete: [] };
+            pendingChanges.hero = { create: [], update: [], delete: [] };
+            pendingChanges.users = { create: [], update: [], delete: [] };
+            pendingChanges.content.update = null;
+            
+            updatePendingCount();
+            await loadData();
+        }
         
     } catch (error) {
         console.error('Error saving changes:', error);

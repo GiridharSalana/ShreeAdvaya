@@ -262,9 +262,96 @@ async function loadHeroImages() {
 // Load Content (About, Contact Info, Hero, Features, Social)
 async function loadContent() {
     try {
-        const content = await fetchLocalData('/data/content.json');
+        // Check localStorage first (for admin panel changes), then fall back to JSON file
+        let content = null;
+        const savedContent = localStorage.getItem('site_content');
+        if (savedContent) {
+            try {
+                content = JSON.parse(savedContent);
+            } catch (e) {
+                // If localStorage data is invalid, fall back to JSON file
+            }
+        }
+        
+        // Fall back to JSON file if no localStorage data
+        if (!content) {
+            content = await fetchLocalData('/data/content.json');
+        }
+        
         if (!content) {
             throw new Error('Failed to load content');
+        }
+        
+        // Update page title and meta description
+        if (content.pageTitle) {
+            document.title = content.pageTitle;
+        }
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc && content.metaDescription) {
+            metaDesc.setAttribute('content', content.metaDescription);
+        }
+        
+        // Update logo
+        if (content.logo) {
+            const logoImg = document.querySelector('.logo-image');
+            if (logoImg) {
+                logoImg.src = content.logo;
+                logoImg.alt = (content.siteName || 'ShreeAdvaya') + ' Logo';
+            }
+        }
+        
+        // Update site name in navbar
+        if (content.siteName) {
+            const siteNameEl = document.querySelector('.nav-logo h2');
+            if (siteNameEl) {
+                siteNameEl.textContent = content.siteName;
+            }
+        }
+        
+        // Update favicon
+        if (content.favicon) {
+            const faviconLink = document.querySelector('link[rel="icon"]');
+            const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+            if (faviconLink) {
+                faviconLink.href = content.favicon;
+            }
+            if (appleTouchIcon) {
+                appleTouchIcon.href = content.favicon;
+            }
+        }
+        
+        // Update footer content
+        if (content.footerCompanyName || content.copyrightText) {
+            const copyrightEl = document.querySelector('.copyright-text');
+            if (copyrightEl) {
+                if (content.copyrightText) {
+                    copyrightEl.textContent = content.copyrightText;
+                } else if (content.footerCompanyName) {
+                    copyrightEl.textContent = `© ${new Date().getFullYear()} ${content.footerCompanyName}. All rights reserved.`;
+                }
+            }
+        }
+        
+        // Update designer link and name
+        if (content.designerLink || content.designerName) {
+            const designerLink = document.querySelector('.designer-link');
+            const designedText = document.querySelector('.designed-text');
+            if (designerLink && content.designerLink) {
+                designerLink.href = content.designerLink;
+            }
+            if (designerLink && content.designerName) {
+                designerLink.textContent = content.designerName;
+            }
+            if (designedText && content.designerName) {
+                // Update the "Made By" text
+                const link = designedText.querySelector('a');
+                if (link) {
+                    link.textContent = content.designerName;
+                    if (content.designerLink) {
+                        link.href = content.designerLink;
+                    }
+                }
+            }
         }
         
         // Default values
