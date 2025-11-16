@@ -372,18 +372,31 @@ async function checkAuth() {
 function showLogin() {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('adminDashboard').style.display = 'none';
+    
+    // Hide mobile toggle on login screen (login has its own toggle)
+    const mobileToggle = document.querySelector('.theme-toggle-mobile');
+    if (mobileToggle) {
+        mobileToggle.style.setProperty('display', 'none', 'important');
+    }
 }
 
 function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
     
+    // Show mobile toggle when dashboard is visible
+    const mobileToggle = document.querySelector('.theme-toggle-mobile');
+    if (mobileToggle) {
+        mobileToggle.style.setProperty('display', 'flex', 'important');
+        mobileToggle.style.setProperty('visibility', 'visible', 'important');
+        mobileToggle.style.setProperty('opacity', '1', 'important');
+    }
+    
     // Immediately set theme toggle visibility after showing dashboard
     requestAnimationFrame(() => {
         handleThemeToggleVisibility();
         
         // Force show mobile toggle with multiple methods
-        const mobileToggle = document.querySelector('.theme-toggle-mobile');
         if (mobileToggle) {
             mobileToggle.style.setProperty('display', 'flex', 'important');
             mobileToggle.style.setProperty('visibility', 'visible', 'important');
