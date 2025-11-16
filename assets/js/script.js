@@ -67,11 +67,10 @@ async function loadDynamicContent() {
     ]);
 }
 
-// Helper function to fetch with fallback to local JSON
-async function fetchWithFallback(apiPath, fallbackPath) {
-    // Try API first
+// Helper function to fetch from local JSON files
+async function fetchLocalData(filePath) {
     try {
-        const response = await fetch(`${API_BASE}${apiPath}`, {
+        const response = await fetch(filePath, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'
@@ -80,27 +79,8 @@ async function fetchWithFallback(apiPath, fallbackPath) {
         if (response.ok) {
             return await response.json();
         }
-        // If API returns 404, immediately try fallback without logging
-        if (response.status === 404) {
-            // Silently fall through to fallback
-        }
     } catch (error) {
-        // Network error or other issue - try fallback
-    }
-    
-    // Fallback to local JSON file
-    try {
-        const fallbackResponse = await fetch(fallbackPath, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        if (fallbackResponse.ok) {
-            return await fallbackResponse.json();
-        }
-    } catch (error) {
-        // If fallback also fails, return null
+        // Silently handle error
     }
     return null;
 }
@@ -108,7 +88,7 @@ async function fetchWithFallback(apiPath, fallbackPath) {
 // Load Products
 async function loadProducts() {
     try {
-        const products = await fetchWithFallback('/products', '/data/products.json');
+        const products = await fetchLocalData('/data/products.json');
         if (!products) {
             throw new Error('Failed to load products');
         }
@@ -208,7 +188,7 @@ async function loadProducts() {
 // Load Gallery
 async function loadGallery() {
     try {
-        const gallery = await fetchWithFallback('/gallery', '/data/gallery.json');
+        const gallery = await fetchLocalData('/data/gallery.json');
         if (!gallery) {
             throw new Error('Failed to load gallery');
         }
@@ -242,7 +222,7 @@ async function loadGallery() {
 // Load Hero Images
 async function loadHeroImages() {
     try {
-        const heroes = await fetchWithFallback('/hero', '/data/hero.json');
+        const heroes = await fetchLocalData('/data/hero.json');
         if (!heroes) {
             throw new Error('Failed to load hero images');
         }
@@ -281,7 +261,7 @@ async function loadHeroImages() {
 // Load Content (About, Contact Info, Hero, Features, Social)
 async function loadContent() {
     try {
-        const content = await fetchWithFallback('/content', '/data/content.json');
+        const content = await fetchLocalData('/data/content.json');
         if (!content) {
             throw new Error('Failed to load content');
         }
