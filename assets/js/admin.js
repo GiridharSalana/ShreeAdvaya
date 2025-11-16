@@ -52,27 +52,21 @@ function reinitThemeButtons() {
 }
 
 // Handle window resize to ensure theme toggle visibility
+// Theme toggle is now always at bottom for all screens
 function handleThemeToggleVisibility() {
-    const isMobile = window.innerWidth <= 768;
     const mobileToggle = document.querySelector('.theme-toggle-mobile');
     const headerToggle = document.querySelector('.theme-toggle-header');
+    const loginToggle = document.querySelector('.theme-toggle-login');
     
-    if (isMobile) {
-        // On mobile, ensure mobile toggle is visible (use !important to override CSS)
-        if (mobileToggle) {
-            mobileToggle.style.setProperty('display', 'flex', 'important');
-        }
-        if (headerToggle) {
-            headerToggle.style.setProperty('display', 'none', 'important');
-        }
-    } else {
-        // On desktop, ensure header toggle is visible
-        if (mobileToggle) {
-            mobileToggle.style.setProperty('display', 'none', 'important');
-        }
-        if (headerToggle) {
-            headerToggle.style.setProperty('display', 'flex', 'important');
-        }
+    // Always show bottom toggle, hide header toggle
+    if (mobileToggle) {
+        mobileToggle.style.setProperty('display', 'flex', 'important');
+    }
+    if (headerToggle) {
+        headerToggle.style.setProperty('display', 'none', 'important');
+    }
+    if (loginToggle) {
+        loginToggle.style.setProperty('display', 'flex', 'important');
     }
 }
 

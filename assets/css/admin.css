@@ -69,21 +69,23 @@ body {
 
 .theme-toggle-login {
     position: fixed;
-    top: 30px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
     display: flex;
     gap: 5px;
     background: var(--bg-tertiary);
-    padding: 4px;
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
+    padding: 8px;
+    border-radius: 25px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Fixed bottom theme toggle for mobile */
+/* Fixed bottom theme toggle for all screens */
 .theme-toggle-mobile {
-    display: none;
+    display: flex;
+    gap: 5px;
     position: fixed;
     bottom: 20px;
     left: 50%;
@@ -133,6 +135,7 @@ body {
     width: 100%;
     max-width: 400px;
     padding: 20px;
+    padding-bottom: 100px; /* Space for fixed bottom theme toggle on all screens */
 }
 
 .login-box {
@@ -307,10 +310,10 @@ body {
 }
 
 .theme-toggle-header {
+    display: none; /* Hide header toggle, use bottom toggle for all screens */
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
     gap: 5px;
     background: var(--bg-tertiary);
     padding: 4px;
@@ -386,6 +389,7 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
+    padding-bottom: 80px; /* Space for fixed bottom theme toggle on all screens */
 }
 
 /* Admin Content */
@@ -913,29 +917,23 @@ body {
     }
 }
 
+/* Theme toggle always at bottom for all screens */
+.theme-toggle-login {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+}
+
 @media (max-width: 768px) {
-    /* Hide theme toggle in header on mobile */
-    .theme-toggle-header {
-        display: none;
-    }
-    
-    /* Show fixed bottom theme toggle on mobile */
-    .theme-toggle-mobile {
-        display: flex;
-        gap: 5px;
-    }
-    
-    /* Move login theme toggle to bottom on mobile */
+    /* Move login theme toggle to bottom on mobile (already at bottom) */
     .theme-toggle-login {
-        top: auto;
         bottom: 20px;
-        transform: translateX(-50%);
     }
     
-    /* Add padding to login container for theme toggle */
-    .login-container {
-        padding-bottom: 80px;
-    }
+    /* Login container padding already set for all screens */
 
     .admin-header {
         padding: 15px;
@@ -978,7 +976,7 @@ body {
 
     .admin-container {
         min-height: calc(100vh - 220px);
-        padding-bottom: 80px; /* Space for fixed bottom theme toggle */
+        padding-bottom: 80px; /* Space for fixed bottom theme toggle on all screens */
     }
 
     .notification {
