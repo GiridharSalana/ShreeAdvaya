@@ -289,14 +289,14 @@
                     <input type="number" id="productPrice" required>
                 </div>
                 <div class="form-group">
-                    <label>Image URL</label>
-                    <input type="text" id="productImage" placeholder="assets/images/product-X.webp">
-                    <small>Or upload new image below</small>
-                </div>
-                <div class="form-group">
-                    <label>Upload Image</label>
-                    <input type="file" id="productImageUpload" accept="image/*">
-                    <div id="productImagePreview" class="image-preview"></div>
+                    <label>Product Images *</label>
+                    <small>Add multiple images to show in a carousel on the main page</small>
+                    <div id="productImagesContainer">
+                        <!-- Images will be added here dynamically -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addProductImageField()" style="margin-top: 10px;">
+                        <i class="fas fa-plus"></i> Add Image
+                    </button>
                 </div>
                 <div class="form-group">
                     <label>Alt Text</label>

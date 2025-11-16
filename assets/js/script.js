@@ -58,24 +58,45 @@ function escapeHtml(text) {
 
 // Load all dynamic content
 async function loadDynamicContent() {
+    // Load all content in parallel, errors are handled individually
+    await Promise.allSettled([
+        loadProducts(),
+        loadGallery(),
+        loadHeroImages(),
+        loadContent()
+    ]);
+}
+
+// Helper function to fetch with fallback to local JSON
+async function fetchWithFallback(apiPath, fallbackPath) {
     try {
-        await Promise.all([
-            loadProducts(),
-            loadGallery(),
-            loadHeroImages(),
-            loadContent()
-        ]);
+        const response = await fetch(`${API_BASE}${apiPath}`);
+        if (response.ok) {
+            return await response.json();
+        }
     } catch (error) {
-        console.error('Error loading dynamic content:', error);
+        // Silently try fallback
     }
+    
+    // Fallback to local JSON file
+    try {
+        const fallbackResponse = await fetch(fallbackPath);
+        if (fallbackResponse.ok) {
+            return await fallbackResponse.json();
+        }
+    } catch (error) {
+        // If fallback also fails, return null
+    }
+    return null;
 }
 
 // Load Products
 async function loadProducts() {
     try {
-        const response = await fetch(`${API_BASE}/products`);
-        if (!response.ok) throw new Error('Failed to load products');
-        const products = await response.json();
+        const products = await fetchWithFallback('/products', '/data/products.json');
+        if (!products) {
+            throw new Error('Failed to load products');
+        }
         
         const productsGrid = document.getElementById('productsGrid');
         if (!productsGrid) return;
@@ -92,15 +113,59 @@ async function loadProducts() {
             card.className = 'product-card';
             card.setAttribute('data-category', escapeHtml(product.category || ''));
             
-            const productImage = escapeHtml(product.image || '');
+            // Support both single image (backward compatibility) and multiple images
+            const productImages = product.images && Array.isArray(product.images) && product.images.length > 0 
+                ? product.images 
+                : (product.image ? [product.image] : ['assets/images/product-1.webp']);
+            
             const productAlt = escapeHtml(product.alt || product.name || '');
             const productName = escapeHtml(product.name || '');
             const productPrice = escapeHtml(String(product.price || ''));
             const safeProductName = productName.replace(/'/g, "\\'");
+            const cardId = `product-${product.id || index}`;
+            
+            // Build image carousel HTML if multiple images, otherwise single image
+            let imageHTML = '';
+            if (productImages.length > 1) {
+                // Multiple images - carousel
+                let slidesHTML = '';
+                let dotsHTML = '';
+                productImages.forEach((img, imgIndex) => {
+                    const safeImg = escapeHtml(img);
+                    const isActive = imgIndex === 0 ? 'active' : '';
+                    slidesHTML += `
+                        <div class="product-image-slide ${isActive}">
+                            <img src="${safeImg}" alt="${productAlt}" loading="lazy" onerror="this.src='assets/images/product-1.webp'">
+                        </div>
+                    `;
+                    dotsHTML += `<button class="product-image-dot ${isActive}" onclick="showProductImage('${cardId}', ${imgIndex})"></button>`;
+                });
+                
+                imageHTML = `
+                    <div class="product-image-carousel" id="${cardId}-carousel">
+                        ${slidesHTML}
+                        <button class="product-image-nav prev" onclick="changeProductImage('${cardId}', -1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="product-image-nav next" onclick="changeProductImage('${cardId}', 1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <div class="product-image-dots">
+                            ${dotsHTML}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Single image - simple display
+                const safeImg = escapeHtml(productImages[0]);
+                imageHTML = `
+                    <img src="${safeImg}" alt="${productAlt}" loading="lazy" onerror="this.src='assets/images/product-1.webp'">
+                `;
+            }
             
             card.innerHTML = `
                 <div class="product-image">
-                    <img src="${productImage}" alt="${productAlt}" loading="lazy" onerror="this.src='assets/images/product-1.webp'">
+                    ${imageHTML}
                     <div class="product-overlay">
                         <button class="btn btn-primary" onclick="openWhatsApp('${safeProductName}')">Inquire Now</button>
                     </div>
@@ -117,10 +182,10 @@ async function loadProducts() {
         const newProductCards = document.querySelectorAll('.product-card');
         initProductCards(newProductCards);
     } catch (error) {
-        console.error('Error loading products:', error);
+        // Silently handle error - show fallback message
         const productsGrid = document.getElementById('productsGrid');
         if (productsGrid) {
-            productsGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 40px; color: #999;">Unable to load products. Please try again later.</p>';
+            productsGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 40px; color: #999;">No products available at the moment.</p>';
         }
     }
 }
@@ -128,9 +193,10 @@ async function loadProducts() {
 // Load Gallery
 async function loadGallery() {
     try {
-        const response = await fetch(`${API_BASE}/gallery`);
-        if (!response.ok) throw new Error('Failed to load gallery');
-        const gallery = await response.json();
+        const gallery = await fetchWithFallback('/gallery', '/data/gallery.json');
+        if (!gallery) {
+            throw new Error('Failed to load gallery');
+        }
         
         const galleryGrid = document.getElementById('galleryGrid');
         if (!galleryGrid) return;
@@ -154,16 +220,17 @@ async function loadGallery() {
         // Reinitialize gallery lightbox
         initGalleryLightbox();
     } catch (error) {
-        console.error('Error loading gallery:', error);
+        // Silently handle error - gallery will remain empty
     }
 }
 
 // Load Hero Images
 async function loadHeroImages() {
     try {
-        const response = await fetch(`${API_BASE}/hero`);
-        if (!response.ok) throw new Error('Failed to load hero images');
-        const heroes = await response.json();
+        const heroes = await fetchWithFallback('/hero', '/data/hero.json');
+        if (!heroes) {
+            throw new Error('Failed to load hero images');
+        }
         
         const heroSlideshow = document.getElementById('heroSlideshow');
         if (!heroSlideshow) return;
@@ -187,10 +254,11 @@ async function loadHeroImages() {
         // Initialize hero slideshow
         initHeroSlideshow();
     } catch (error) {
-        console.error('Error loading hero images:', error);
+        // Silently handle error - use default hero image
         const heroSlideshow = document.getElementById('heroSlideshow');
         if (heroSlideshow) {
             heroSlideshow.innerHTML = '<div class="hero-slide active" style="background-image: url(\'assets/images/hero-1.webp\')"></div>';
+            initHeroSlideshow();
         }
     }
 }
@@ -198,9 +266,10 @@ async function loadHeroImages() {
 // Load Content (About, Contact Info, Hero, Features, Social)
 async function loadContent() {
     try {
-        const response = await fetch(`${API_BASE}/content`);
-        if (!response.ok) throw new Error('Failed to load content');
-        const content = await response.json();
+        const content = await fetchWithFallback('/content', '/data/content.json');
+        if (!content) {
+            throw new Error('Failed to load content');
+        }
         
         // Default values
         const defaults = {
@@ -347,7 +416,7 @@ async function loadContent() {
         if (footerPhone) footerPhone.innerHTML = `<i class="fas fa-phone"></i> ${phone}`;
         if (footerEmail) footerEmail.innerHTML = `<i class="fas fa-envelope"></i> ${email}`;
     } catch (error) {
-        console.error('Error loading content:', error);
+        // Silently handle error - defaults will be used
         // Set defaults on error
         const defaults = {
             hero: {
@@ -982,3 +1051,77 @@ window.addEventListener("load", () => {
         });
     }
 });
+
+// Product Image Carousel Functions
+const productCarousels = {};
+
+function initProductCarousel(cardId, totalImages) {
+    if (totalImages <= 1) return;
+    productCarousels[cardId] = {
+        currentIndex: 0,
+        totalImages: totalImages
+    };
+}
+
+function changeProductImage(cardId, direction) {
+    if (!productCarousels[cardId]) return;
+    
+    const carousel = productCarousels[cardId];
+    carousel.currentIndex += direction;
+    
+    if (carousel.currentIndex < 0) {
+        carousel.currentIndex = carousel.totalImages - 1;
+    } else if (carousel.currentIndex >= carousel.totalImages) {
+        carousel.currentIndex = 0;
+    }
+    
+    showProductImage(cardId, carousel.currentIndex);
+}
+
+function showProductImage(cardId, index) {
+    const carouselEl = document.getElementById(`${cardId}-carousel`);
+    if (!carouselEl) return;
+    
+    const slides = carouselEl.querySelectorAll('.product-image-slide');
+    const dots = carouselEl.querySelectorAll('.product-image-dot');
+    
+    if (slides.length === 0) return;
+    
+    // Update slides
+    slides.forEach((slide, i) => {
+        if (i === index) {
+            slide.classList.add('active');
+        } else {
+            slide.classList.remove('active');
+        }
+    });
+    
+    // Update dots
+    dots.forEach((dot, i) => {
+        if (i === index) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+    
+    // Update carousel state
+    if (productCarousels[cardId]) {
+        productCarousels[cardId].currentIndex = index;
+    }
+}
+
+// Initialize carousels after products are loaded
+const originalLoadProducts = loadProducts;
+loadProducts = async function() {
+    await originalLoadProducts();
+    
+    // Initialize carousels for products with multiple images
+    document.querySelectorAll('.product-image-carousel').forEach(carousel => {
+        const cardId = carousel.id.replace('-carousel', '');
+        const slides = carousel.querySelectorAll('.product-image-slide');
+        if (slides.length > 1) {
+            initProductCarousel(cardId, slides.length);
+        }
+    });
+};

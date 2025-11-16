@@ -10,10 +10,10 @@
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
     <link rel="apple-touch-icon" href="assets/images/favicon.svg">
     <link rel="preload" as="image" href="assets/images/hero-1.webp" type="image/webp">
-    
+
     <!-- Prevent flash of unstyled content (FOUC) - Apply theme immediately -->
     <script>
-        (function() {
+        (function () {
             const savedTheme = localStorage.getItem('site_theme') || 'system';
             if (savedTheme === 'system') {
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -23,7 +23,7 @@
             }
         })();
     </script>
-    
+
     <link rel="stylesheet" href="assets/css/styles.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
@@ -52,11 +52,6 @@
                 <span class="bar"></span>
                 <span class="bar"></span>
             </div>
-            <div class="theme-toggle">
-                <button class="theme-btn" data-theme="light" title="Light Mode">☀️</button>
-                <button class="theme-btn active" data-theme="system" title="System">💻</button>
-                <button class="theme-btn" data-theme="dark" title="Dark Mode">🌙</button>
-            </div>
         </div>
     </nav>
 
@@ -69,7 +64,8 @@
         <div class="container">
             <div class="hero-content">
                 <h1 class="hero-title" id="heroTitle">Elegance Redefined</h1>
-                <p class="hero-subtitle" id="heroSubtitle">Discover our exquisite collection of premium sarees that blend traditional
+                <p class="hero-subtitle" id="heroSubtitle">Discover our exquisite collection of premium sarees that
+                    blend traditional
                     craftsmanship with modern sophistication</p>
                 <div class="hero-buttons">
                     <a href="#products" class="btn btn-primary">Explore Collection</a>
@@ -233,12 +229,18 @@
                     <h3>ShreeAdvaya</h3>
                     <p>Celebrating the timeless elegance of Indian sarees with modern sophistication.</p>
                     <div class="social-links" id="socialLinks">
-                        <a href="#" class="social-link" id="socialFacebook" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="social-link" id="socialInstagram" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-link" id="socialWhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                        <a href="#" class="social-link" id="socialTwitter" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="social-link" id="socialYouTube" aria-label="YouTube" style="display: none;"><i class="fab fa-youtube"></i></a>
-                        <a href="#" class="social-link" id="socialPinterest" aria-label="Pinterest" style="display: none;"><i class="fab fa-pinterest"></i></a>
+                        <a href="#" class="social-link" id="socialFacebook" aria-label="Facebook"><i
+                                class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link" id="socialInstagram" aria-label="Instagram"><i
+                                class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" id="socialWhatsApp" aria-label="WhatsApp"><i
+                                class="fab fa-whatsapp"></i></a>
+                        <a href="#" class="social-link" id="socialTwitter" aria-label="Twitter"><i
+                                class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link" id="socialYouTube" aria-label="YouTube"
+                            style="display: none;"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="social-link" id="socialPinterest" aria-label="Pinterest"
+                            style="display: none;"><i class="fab fa-pinterest"></i></a>
                     </div>
                 </div>
             </div>
@@ -288,8 +290,17 @@
                 </div>
             </div>
 
+            <div class="footer-theme-toggle">
+                <div class="theme-toggle">
+                    <button class="theme-btn" data-theme="light" title="Light Mode">☀️</button>
+                    <button class="theme-btn active" data-theme="system" title="System">💻</button>
+                    <button class="theme-btn" data-theme="dark" title="Dark Mode">🌙</button>
+                </div>
+            </div>
+
             <div class="footer-bottom">
-                <p class="designed-text">Designed with <i class="fas fa-heart"></i> by <a href="https://giridharsalana.vercel.app" target="_blank" rel="noopener noreferrer" class="designer-link">Giridhar Salana</a></p>
+                <p class="designed-text">Made By <a href="https://giridharsalana.vercel.app" target="_blank"
+                        rel="noopener noreferrer" class="designer-link">Giridhar Salana</a></p>
                 <p class="copyright-text">&copy; 2024 ShreeAdvaya. All rights reserved.</p>
             </div>
         </div>
@@ -298,7 +309,7 @@
     <script src="assets/js/script.js"></script>
     <script>
         // Vercel Analytics
-        (function() {
+        (function () {
             var script = document.createElement('script');
             script.src = 'https://va.vercel-scripts.com/v1/script.js';
             script.defer = true;
