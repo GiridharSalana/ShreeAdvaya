@@ -1,4 +1,13 @@
 {
+  "siteName": "",
+  "pageTitle": "",
+  "metaDescription": "",
+  "logo": "assets/images/logo.svg",
+  "favicon": "assets/images/favicon.svg",
+  "footerCompanyName": "",
+  "copyrightText": "© 2025 ShreeAdvaya. All rights reserved.",
+  "designerLink": "",
+  "designerName": "",
   "hero": {
     "title": "Elegance Redefined",
     "subtitle": "Discover our exquisite collection of premium sarees that blend traditional craftsmanship with modern sophistication."
