@@ -58,20 +58,20 @@ function handleThemeToggleVisibility() {
     const headerToggle = document.querySelector('.theme-toggle-header');
     
     if (isMobile) {
-        // On mobile, ensure mobile toggle is visible
+        // On mobile, ensure mobile toggle is visible (use !important to override CSS)
         if (mobileToggle) {
-            mobileToggle.style.display = 'flex';
+            mobileToggle.style.setProperty('display', 'flex', 'important');
         }
         if (headerToggle) {
-            headerToggle.style.display = 'none';
+            headerToggle.style.setProperty('display', 'none', 'important');
         }
     } else {
         // On desktop, ensure header toggle is visible
         if (mobileToggle) {
-            mobileToggle.style.display = 'none';
+            mobileToggle.style.setProperty('display', 'none', 'important');
         }
         if (headerToggle) {
-            headerToggle.style.display = 'flex';
+            headerToggle.style.setProperty('display', 'flex', 'important');
         }
     }
 }
@@ -155,24 +155,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadData();
         
         // Re-initialize theme buttons after dashboard is shown (mobile toggle is in dashboard)
-        setTimeout(() => {
-            reinitThemeButtons();
-            setupThemeListeners(); // Re-setup listeners for mobile toggle
-            handleThemeToggleVisibility(); // Ensure correct toggle is visible
-        }, 100);
+        // Use requestAnimationFrame to ensure it runs after browser renders
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                reinitThemeButtons();
+                setupThemeListeners(); // Re-setup listeners for mobile toggle
+                handleThemeToggleVisibility(); // Ensure correct toggle is visible
+                
+                // Double-check after a short delay to ensure it's still visible
+                setTimeout(() => {
+                    handleThemeToggleVisibility();
+                }, 200);
+            }, 50);
+        });
         
         // Handle resize events
         window.addEventListener('resize', handleThemeToggleVisibility);
     } else {
         showLogin();
         // Re-initialize theme buttons for login page
-        setTimeout(() => {
-            reinitThemeButtons();
-            handleThemeToggleVisibility(); // Ensure correct toggle is visible
-        }, 100);
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                reinitThemeButtons();
+                handleThemeToggleVisibility(); // Ensure correct toggle is visible
+            }, 50);
+        });
         
         // Handle resize events
         window.addEventListener('resize', handleThemeToggleVisibility);
+    }
+});
+
+// Also handle on window load (backup for refresh scenarios)
+window.addEventListener('load', () => {
+    // Small delay to ensure everything is rendered
+    setTimeout(() => {
+        handleThemeToggleVisibility();
+        reinitThemeButtons();
+    }, 100);
+});
+
+// Handle page visibility changes (when tab becomes visible again)
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        setTimeout(() => {
+            handleThemeToggleVisibility();
+        }, 50);
     }
 });
 
@@ -342,6 +370,11 @@ function showLogin() {
 function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
+    
+    // Immediately set theme toggle visibility after showing dashboard
+    requestAnimationFrame(() => {
+        handleThemeToggleVisibility();
+    });
 }
 
 // Login form handler - supports both single password and multi-user
