@@ -174,6 +174,9 @@ async function loadProducts() {
         // Reinitialize product cards for animations
         const newProductCards = document.querySelectorAll('.product-card');
         initProductCards(newProductCards);
+        
+        // Dynamically generate category buttons from products
+        updateCategoryButtons(products);
     } catch (error) {
         // Silently handle error - show fallback message
         const productsGrid = document.getElementById('productsGrid');
@@ -495,6 +498,47 @@ function initHeroSlideshow() {
     // Auto-advance slides every 5 seconds
     if (slides.length > 1) {
         setInterval(nextSlide, 5000);
+    }
+}
+
+// Update category buttons dynamically from products
+function updateCategoryButtons(products) {
+    const categoriesContainer = document.querySelector('.product-categories');
+    if (!categoriesContainer) return;
+    
+    // Get unique categories from products
+    const categories = new Set();
+    products.forEach(product => {
+        if (product.category) {
+            categories.add(product.category);
+        }
+    });
+    
+    // Create category buttons (keep "All" button, add dynamic ones)
+    let buttonsHTML = '<button class="category-btn active" data-category="all">All</button>';
+    
+    // Category display names mapping
+    const categoryNames = {
+        'silk': 'Silk Sarees',
+        'cotton': 'Cotton Sarees',
+        'designer': 'Designer Sarees',
+        'bridal': 'Bridal Sarees'
+    };
+    
+    // Sort categories for consistent display
+    const sortedCategories = Array.from(categories).sort();
+    
+    sortedCategories.forEach(category => {
+        const displayName = categoryNames[category] || category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ');
+        buttonsHTML += `<button class="category-btn" data-category="${escapeHtml(category)}">${escapeHtml(displayName)}</button>`;
+    });
+    
+    categoriesContainer.innerHTML = buttonsHTML;
+    
+    // Reinitialize event listeners for new buttons
+    const newProductCards = document.querySelectorAll('.product-card');
+    if (newProductCards.length > 0) {
+        initProductCards(newProductCards);
     }
 }
 

@@ -277,12 +277,14 @@
                 </div>
                 <div class="form-group">
                     <label>Category *</label>
-                    <select id="productCategory" required>
+                    <input type="text" id="productCategory" list="categoryList" placeholder="Select or type new category" required>
+                    <datalist id="categoryList">
                         <option value="silk">Silk Sarees</option>
                         <option value="cotton">Cotton Sarees</option>
                         <option value="designer">Designer Sarees</option>
                         <option value="bridal">Bridal Sarees</option>
-                    </select>
+                    </datalist>
+                    <small style="display: block; margin-top: 5px; color: var(--text-secondary);">Select from list or type a new category name</small>
                 </div>
                 <div class="form-group">
                     <label>Price (₹) *</label>

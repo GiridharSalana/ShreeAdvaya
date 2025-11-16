@@ -581,15 +581,16 @@ function createProductCard(product) {
     const productName = escapeHtml(product.name || '');
     const productCategory = escapeHtml(product.category || '');
     const productPrice = escapeHtml(String(product.price || ''));
-    const imageCount = productImages.length > 1 ? ` <span style="font-size: 0.8em; color: #d4af37;">(${productImages.length} images)</span>` : '';
+    const imageCount = productImages.length > 1 ? `<div style="font-size: 0.85rem; color: #d4af37; margin-top: 4px;">${productImages.length} images</div>` : '';
     
     card.innerHTML = `
         <img src="${productImage}" alt="${productAlt}" onerror="this.src='assets/images/product-1.webp'">
         <div class="item-card-body">
-            <div class="item-card-title">${productName}${imageCount}</div>
+            <div class="item-card-title">${productName}</div>
             <div class="item-card-info">
                 <div>Category: ${productCategory}</div>
                 <div>Price: ₹${productPrice}</div>
+                ${imageCount}
             </div>
             ${actionsHTML}
         </div>
