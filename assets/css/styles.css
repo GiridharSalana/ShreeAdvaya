@@ -81,6 +81,8 @@ h6 {
     margin-bottom: 1rem;
     color: var(--text-primary);
     position: relative;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .section-title::after {
@@ -550,17 +552,20 @@ h6 {
     padding: 10px 25px;
     border: 2px solid #d4af37;
     background: transparent;
-    color: #2c1810;
+    color: var(--text-primary);
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-height: 44px; /* Better touch target */
 }
 
 .category-btn.active,
 .category-btn:hover {
     background: #d4af37;
     color: #ffffff;
+    border-color: #d4af37;
 }
 
 .products-grid {
