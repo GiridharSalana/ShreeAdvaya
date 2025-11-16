@@ -161,13 +161,11 @@ async function loadProducts() {
             card.innerHTML = `
                 <div class="product-image">
                     ${imageHTML}
-                    <div class="product-overlay">
-                        <button class="btn btn-primary" onclick="openWhatsApp('${safeProductName}')">Inquire Now</button>
-                    </div>
                 </div>
                 <div class="product-info">
                     <h3>${productName}</h3>
                     <p class="product-price">₹${productPrice}</p>
+                    <button class="btn btn-primary product-inquire-btn" onclick="openWhatsApp('${safeProductName}')">Inquire Now</button>
                 </div>
             `;
             productsGrid.appendChild(card);

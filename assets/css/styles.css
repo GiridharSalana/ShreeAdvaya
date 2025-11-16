@@ -724,18 +724,31 @@ h6 {
 
 .product-info {
     padding: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .product-info h3 {
     font-size: 1.3rem;
     margin-bottom: 0.5rem;
     color: var(--text-primary);
+    text-align: center;
 }
 
 .product-price {
     font-size: 1.2rem;
     font-weight: 600;
     color: #d4af37;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.product-inquire-btn {
+    width: 100%;
+    max-width: 200px;
+    margin-top: 0.5rem;
 }
 
 /* Gallery Section */
