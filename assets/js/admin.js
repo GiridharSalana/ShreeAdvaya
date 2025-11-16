@@ -156,9 +156,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setupThemeListeners(); // Re-setup listeners for mobile toggle
                 handleThemeToggleVisibility(); // Ensure correct toggle is visible
                 
+                // Force show mobile toggle
+                const mobileToggle = document.querySelector('.theme-toggle-mobile');
+                if (mobileToggle) {
+                    mobileToggle.style.setProperty('display', 'flex', 'important');
+                    mobileToggle.style.setProperty('visibility', 'visible', 'important');
+                    mobileToggle.style.setProperty('opacity', '1', 'important');
+                }
+                
                 // Double-check after a short delay to ensure it's still visible
                 setTimeout(() => {
                     handleThemeToggleVisibility();
+                    const mobileToggle2 = document.querySelector('.theme-toggle-mobile');
+                    if (mobileToggle2) {
+                        mobileToggle2.style.setProperty('display', 'flex', 'important');
+                        mobileToggle2.style.setProperty('visibility', 'visible', 'important');
+                    }
                 }, 200);
             }, 50);
         });
@@ -368,6 +381,16 @@ function showDashboard() {
     // Immediately set theme toggle visibility after showing dashboard
     requestAnimationFrame(() => {
         handleThemeToggleVisibility();
+        
+        // Force show mobile toggle with multiple methods
+        const mobileToggle = document.querySelector('.theme-toggle-mobile');
+        if (mobileToggle) {
+            mobileToggle.style.setProperty('display', 'flex', 'important');
+            mobileToggle.style.setProperty('visibility', 'visible', 'important');
+            mobileToggle.style.setProperty('opacity', '1', 'important');
+            mobileToggle.style.setProperty('position', 'fixed', 'important');
+            mobileToggle.style.setProperty('z-index', '10000', 'important');
+        }
     });
 }
 
