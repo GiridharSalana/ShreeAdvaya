@@ -116,6 +116,196 @@ function hasPermission(action) {
     return false;
 }
 
+// Image Upload Functionality
+
+/**
+ * Upload images to GitHub via API using FormData
+ */
+async function uploadImagesToAPI(files, folder = 'images') {
+    try {
+        const token = localStorage.getItem(STORAGE_KEY);
+        if (!token) {
+            showNotification('Not authenticated. Please login again.', 'error');
+            return null;
+        }
+
+        // Create FormData with files
+        const formData = new FormData();
+        for (const file of files) {
+            formData.append('images', file);
+        }
+        formData.append('folder', folder);
+
+        // Upload to API
+        const response = await fetch(`${API_BASE}/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        console.log('Upload response status:', response.status);
+        console.log('Upload response content-type:', response.headers.get('content-type'));
+
+        if (!response.ok) {
+            let errorMessage = 'Upload failed';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.error || errorMessage;
+                } else {
+                    const text = await response.text();
+                    console.error('Upload error response:', text);
+                    errorMessage = text || `Upload failed with status ${response.status}`;
+                }
+            } catch (e) {
+                console.error('Error parsing response:', e);
+                errorMessage = `Upload failed with status ${response.status}`;
+            }
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+        return result.files; // Array of { filename, path, url, size }
+    } catch (error) {
+        console.error('Upload error:', error);
+        showNotification('Upload failed: ' + error.message, 'error');
+        return null;
+    }
+}
+
+/**
+ * Upload product images
+ */
+async function uploadProductImages() {
+    const fileInput = document.getElementById('productImageFiles');
+    const files = fileInput.files;
+    
+    if (!files || files.length === 0) {
+        showNotification('Please select at least one image file', 'warning');
+        return;
+    }
+
+    // Show loading
+    const uploadBtn = event.target;
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+    try {
+        const uploadedFiles = await uploadImagesToAPI(Array.from(files), 'images');
+        
+        if (uploadedFiles && uploadedFiles.length > 0) {
+            // Add uploaded image URLs to the container
+            const container = document.getElementById('productImagesContainer');
+            
+            uploadedFiles.forEach(file => {
+                addProductImageField(file.url);
+            });
+            
+            showNotification(`Successfully uploaded ${uploadedFiles.length} image(s)`, 'success');
+            
+            // Clear file input
+            fileInput.value = '';
+        }
+    } catch (error) {
+        showNotification('Error uploading images: ' + error.message, 'error');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalText;
+    }
+}
+
+/**
+ * Upload logo image
+ */
+async function uploadLogoImage() {
+    const fileInput = document.getElementById('logoImageFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('Please select an image file', 'warning');
+        return;
+    }
+
+    // Show loading
+    const uploadBtn = event.target;
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+    try {
+        const uploadedFiles = await uploadImagesToAPI([file], 'images');
+        
+        if (uploadedFiles && uploadedFiles.length > 0) {
+            const logoUrl = uploadedFiles[0].url;
+            
+            // Set the URL in the input field
+            document.getElementById('siteLogoUrl').value = logoUrl;
+            
+            // Show preview
+            const preview = document.getElementById('logoPreview');
+            preview.innerHTML = `<img src="${logoUrl}" alt="Logo Preview" style="max-width: 200px; max-height: 100px; object-fit: contain; border-radius: 8px;">`;
+            
+            showNotification('Logo uploaded successfully!', 'success');
+            
+            // Clear file input
+            fileInput.value = '';
+        }
+    } catch (error) {
+        showNotification('Error uploading logo: ' + error.message, 'error');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalText;
+    }
+}
+
+/**
+ * Upload hero image
+ */
+async function uploadHeroImage() {
+    const fileInput = document.getElementById('heroImageFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('Please select an image file', 'warning');
+        return;
+    }
+
+    // Show loading
+    const uploadBtn = event.target;
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+    try {
+        const uploadedFiles = await uploadImagesToAPI([file], 'images');
+        
+        if (uploadedFiles && uploadedFiles.length > 0) {
+            const imageUrl = uploadedFiles[0].url;
+            
+            // Set the URL in the input field
+            document.getElementById('heroImage').value = imageUrl;
+            
+            // Show preview
+            const preview = document.getElementById('heroImagePreview');
+            preview.innerHTML = `<img src="${imageUrl}" alt="Hero Preview" style="max-width: 300px; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 10px;">`;
+            
+            showNotification('Hero image uploaded successfully!', 'success');
+            
+            // Clear file input
+            fileInput.value = '';
+        }
+    } catch (error) {
+        showNotification('Error uploading hero image: ' + error.message, 'error');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalText;
+    }
+}
+
 // Setup theme toggle listeners (needs to work on login screen too)
 function setupThemeListeners() {
     document.querySelectorAll('.theme-btn').forEach(btn => {
